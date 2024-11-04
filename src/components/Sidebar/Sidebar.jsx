@@ -2,7 +2,7 @@ import SidebarItem from './SidebarItem';
 
 function Sidebar() {
   return (
-    <aside className="bg-gray-100 border border-white rounded-lg w-64 h-screen p-4">
+    <aside className="bg-white border border-white rounded-lg w-64 h-screen p-4 shadow-lg">
       <div className="flex items-center mb-6">
         <div className="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center">
           <span className="text-white font-bold">Rene</span>
