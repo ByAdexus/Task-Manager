@@ -1,30 +1,30 @@
-import { useState } from 'react';
+import { InputText } from 'primereact/inputtext'; 
+import 'primeicons/primeicons.css';
 
 function Header() {
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-
-  const toggleDropdown = () => setDropdownOpen(!dropdownOpen);
-
   return (
-    <header className="flex items-center justify-between p-4 bg-white shadow-lg">
-      <h1 className="text-xl font-bold">Kanban Board</h1>
-      <div className="relative">
-        <button onClick={toggleDropdown} className="flex items-center p-2">
-          <span className="material-icons">account_circle</span>
+    <header className="flex items-center justify-between p-4 bg-white rounded-lg shadow-md relative z-20 pl-64"> {/* pl-64 para que el header no se sobreponga al sidebar */}
+      {/* Barra de búsqueda */}
+      <div className="flex items-center space-x-2 w-1/3">
+        <InputText
+          className="p-2 w-full border border-gray-300 rounded-lg"
+          placeholder="Buscar"
+          icon="pi pi-search" // Ícono de lupa de PrimeReact
+        />
+      </div>
+
+      {/* Botones en el lado derecho */}
+      <div className="flex items-center space-x-4">
+        <button className="p-2 bg-yellow-500 text-black rounded-lg shadow-md border border-black">
+          <i className="pi pi-plus mr-2 text-black"></i> Add Task
         </button>
-        {dropdownOpen && (
-          <div className="absolute right-0 w-48 mt-2 bg-white border rounded-md shadow-lg">
-            <ul>
-              <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">Profile</li>
-              <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">Settings</li>
-              <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">Share Project</li>
-              <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">Log out</li>
-            </ul>
-          </div>
-        )}
+        <button className="p-2 bg-yellow-500 text-black rounded-lg shadow-md border border-black">
+          <i className="pi pi-bell"></i>
+        </button>
       </div>
     </header>
   );
 }
 
 export default Header;
+

@@ -1,24 +1,48 @@
-import SidebarItem from './SidebarItem';
+import React, { useState } from 'react'; // Importar React y useState
 
 function Sidebar() {
+  const [visible, setVisible] = useState(true); // Definir el estado 'visible'
+
   return (
-    <aside className="bg-white border border-white rounded-lg w-64 h-screen p-4 shadow-lg">
-      <div className="flex items-center mb-6">
-        <div className="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center">
-          <span className="text-white font-bold">Rene</span>
+    <div
+      className={`bg-white shadow-lg w-64 h-full fixed left-0 top-0 z-30 transform transition-transform duration-300 ${visible ? 'translate-x-0' : '-translate-x-full'}`}
+      style={{ transition: 'transform 0.3s ease-in-out' }}
+    >
+      <div className="flex flex-col h-full justify-between p-4">
+        {/* Contenido del Sidebar */}
+        <div>
+          {/* Título y navegación */}
+          <div className="flex items-center mb-4">
+            <div className="bg-yellow-main text-white p-2 rounded-full mr-3">AZ</div>
+            <span className="font-semibold text-lg">Task-Magnament</span>
+          </div>
+          <nav>
+            <ul>
+              {/* Enlaces del Sidebar */}
+              <li className="p-3 flex items-center text-gray-600 hover:bg-yellow-200 hover:text-black rounded">
+                <i className="pi pi-chart-line mr-2"></i> Dashboard
+              </li>
+              <li className="p-3 flex items-center text-gray-600 hover:bg-yellow-200 hover:text-black rounded">
+                <i className="pi pi-check-circle mr-2"></i> My tasks
+              </li>
+              <li className="p-3 flex items-center text-gray-600 hover:bg-yellow-200 hover:text-black rounded">
+                <i className="pi pi-chart-bar mr-2"></i> Productivity Charts
+              </li>
+            </ul>
+          </nav>
         </div>
-        <h2 className="ml-3 font-semibold text-xl">TaskMaster</h2>
+
+        {/* Pie con configuraciones y logout */}
+        <div>
+          <button className="p-3 w-full flex items-center text-gray-600 hover:bg-yellow-200 hover:text-black rounded mb-2">
+            <i className="pi pi-cog mr-2"></i> Settings
+          </button>
+          <button className="p-3 w-full flex items-center text-gray-600 hover:bg-yellow-200 hover:text-black rounded">
+            <i className="pi pi-sign-out mr-2"></i> Log out
+          </button>
+        </div>
       </div>
-      <nav>
-        <SidebarItem text="Dashboard" />
-        <SidebarItem text="My tasks" active />
-        <SidebarItem text="Notifications" />
-      </nav>
-      <div className="mt-auto">
-        <SidebarItem text="Settings" />
-        <SidebarItem text="Log out" />
-      </div>
-    </aside>
+    </div>
   );
 }
 

@@ -1,20 +1,26 @@
+import React from 'react';
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
-import Sidebar from '../Sidebar/Sidebar';
-import Header from '../Header/Header';
-import KanbanBoard from '../KanbanBoard/KanbanBoard'; // Importa el nuevo componente KanbanBoard
+import Sidebar from './Sidebar';
+import Header from './Header';
+import KanbanBoard from './KanbanBoard';
 
 function AppLayout() {
   return (
     <Router>
-      <div className="flex">
+      <div className="flex h-screen bg-gray-100">
+        {/* Sidebar */}
         <Sidebar />
-        <div className="flex-1">
+
+        {/* Contenido Principal */}
+        <div className="flex-1 flex flex-col ml-64"> {/* Ajuste margen izquierdo para evitar superposición */}
           <Header />
-          <main className="p-6 bg-gray-100">
-            <Switch>
-              <Route path="/kanban" component={KanbanBoard} />
-              {/* Otras rutas si las tienes */}
-            </Switch>
+          <main className="flex-1 p-6 overflow-y-auto">
+            <div className="flex justify-center">
+              <Switch>
+                <Route path="/kanban" component={KanbanBoard} />
+                {/* Otras rutas si las tienes */}
+              </Switch>
+            </div>
           </main>
         </div>
       </div>
