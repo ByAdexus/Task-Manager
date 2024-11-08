@@ -7,8 +7,8 @@ function App() {
     <div className="min-h-screen bg-gray-100">
       <Header />
       <div className="flex flex-col">
-        <Sidebar />
-          <KanbanBoard />
+        <Sidebar/>
+        <KanbanBoard />
       </div>
     </div>
   );
