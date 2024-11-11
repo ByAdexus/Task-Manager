@@ -1,8 +1,9 @@
 import React from 'react';
-import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import KanbanBoard from './KanbanBoard';
+import Dashboard from '../Dashboard';
 
 function AppLayout() {
   return (
@@ -16,16 +17,27 @@ function AppLayout() {
           <Header />
           <main className="flex-1 p-6 overflow-y-auto">
             <div className="flex justify-center">
-              <Switch>
-                <Route path="/kanban" component={KanbanBoard} />
-                {/* Otras rutas si las tienes */}
-              </Switch>
+              <Routes>
+                {/* Definición de rutas */}
+                <Route path="/kanban" element={<KanbanBoard />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                
+                {/* Ruta para manejo de ruta no encontrada */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
             </div>
           </main>
         </div>
       </div>
     </Router>
   );
+}
+
+// Componente para la ruta no encontrada
+function NotFound() {
+  const location = useLocation(); // Hook para obtener la ubicación actual
+  console.log(`Ruta no encontrada: ${location.pathname}`);
+  return <h2>404 - Página no encontrada</h2>;
 }
 
 export default AppLayout;
