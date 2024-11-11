@@ -3,8 +3,7 @@ import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import TaskCard from '../TaskCard/TaskCard';
 import { storeProject, getAllProjects, storeTask, storeAllProjects, getTask } from '../../services/storageService';
 
-
-/* this is only to clean cache
+/*
 const clearCache = () => {
   if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
     navigator.serviceWorker.controller.postMessage('clearCache');
@@ -14,6 +13,7 @@ const clearCache = () => {
 // Call this function when you want to reset the cache (for example, when the page loads or through a button)
 clearCache();
 */
+
 const KanbanBoard = () => {
   const [data, setData] = useState({ projects: {}, projectOrder: [], tasks: {} });
   const [newProjectTitle, setNewProjectTitle] = useState('');
