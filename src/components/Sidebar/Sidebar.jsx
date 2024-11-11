@@ -1,4 +1,5 @@
 import React, { useState } from 'react'; // Importar React y useState
+import { Link } from 'react-router-dom';
 
 function Sidebar() {
   const [visible, setVisible] = useState(true); // Definir el estado 'visible'
@@ -17,18 +18,26 @@ function Sidebar() {
             <span className="font-semibold text-lg">Task-Magnament</span>
           </div>
           <nav>
-            <ul>
-              {/* Enlaces del Sidebar */}
-              <li className="p-3 flex items-center text-gray-600 hover:bg-yellow-200 hover:text-black rounded">
-                <i className="pi pi-chart-line mr-2"></i> Dashboard
-              </li>
-              <li className="p-3 flex items-center text-gray-600 hover:bg-yellow-200 hover:text-black rounded">
-                <i className="pi pi-check-circle mr-2"></i> My tasks
-              </li>
-              <li className="p-3 flex items-center text-gray-600 hover:bg-yellow-200 hover:text-black rounded">
-                <i className="pi pi-chart-bar mr-2"></i> Productivity Charts
-              </li>
-            </ul>
+
+          <ul>
+        {/* Enlaces del Sidebar */}
+        <li className="p-3 flex items-center text-gray-600 hover:bg-yellow-200 hover:text-black rounded">
+          <Link to="/Dashboard" className="flex items-center w-full">
+            <i className="pi pi-chart-line mr-2"></i> Dashboard
+          </Link>
+        </li>
+        <li className="p-3 flex items-center text-gray-600 hover:bg-yellow-200 hover:text-black rounded">
+          <Link to="/Tasks" className="flex items-center w-full">
+            <i className="pi pi-check-circle mr-2"></i> My Tasks
+          </Link>
+        </li>
+        <li className="p-3 flex items-center text-gray-600 hover:bg-yellow-200 hover:text-black rounded">
+          <Link to="/Productivity" className="flex items-center w-full">
+            <i className="pi pi-chart-bar mr-2"></i> Productivity Charts
+          </Link>
+        </li>
+      </ul>
+
           </nav>
         </div>
 
