@@ -177,7 +177,22 @@ const requestNotificationPermission = async () => {
   }
 };
 
+// Edit task in cache and memory
+const editTask = async (taskId, updatedData) => {
+  const task = await getTask(taskId);
+  if (task) {
+    const updatedTask = { ...task, ...updatedData };
+    await storeTask(updatedTask); // Updates task in cache
+    tasks[taskId] = updatedTask; // Updates in-memory as well
+  }
+};
 
+// Delete task from cache and memory
+const deleteTask = async (taskId) => {
+  delete tasks[taskId]; // Remove from memory
+  const cache = await caches.open("data-cache-v1");
+  await cache.delete(`task-${taskId}`); // Remove from cache
+};
 
 
 export {
@@ -192,6 +207,8 @@ export {
   getUserImage,
   getAllUsers,
   checkTasksDueDates,
+  editTask, // New export for editing task
+  deleteTask, // New export for deleting task
   sendTaskDueNotification,
   requestNotificationPermission,
 };
