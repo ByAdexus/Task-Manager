@@ -52,6 +52,7 @@ const getProject = async (projectId) => {
 // Store all projects in cache (useful for managing multiple projects)
 const storeAllProjects = async (projects) => {
   const key = "projects"; // Cache all projects under a common key
+  console.log (key, projects);
   await storeInCache(key, projects);
 };
 
