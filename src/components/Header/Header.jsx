@@ -110,7 +110,8 @@ function Header() {
   };
 
   return (
-    <header className="flex items-center justify-between p-4 bg-white rounded-lg shadow-md relative z-20 pl-64">
+    <header className="flex items-center justify-between p-4 bg-white rounded-lg shadow-md relative z-20 pl-64
+    dark:bg-gray-800 text-black dark:text-white">
       <div className="flex items-center space-x-2 w-1/3">
         <InputText
           className="p-2 w-full border border-gray-300 rounded-lg"

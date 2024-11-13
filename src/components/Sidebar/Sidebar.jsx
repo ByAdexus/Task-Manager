@@ -1,14 +1,24 @@
 import React, { useState } from 'react'; // Importar React y useState
 import { Link } from 'react-router-dom';
+import { useDarkMode } from '../../services/DarkMode';
 
 function Sidebar() {
   const [visible, setVisible] = useState(true); // Definir el estado 'visible'
-
+  const { isDarkMode, toggleDarkMode } = useDarkMode();
   return (
+    
     <div
-      className={`bg-white shadow-lg w-64 h-full fixed left-0 top-0 z-30 transform transition-transform duration-300 ${visible ? 'translate-x-0' : '-translate-x-full'}`}
+      className={`bg-white shadow-lg w-64 h-full fixed left-0 top-0 z-30 transform transition-transform duration-300 ${visible ? 'translate-x-0' : '-translate-x-full'}
+      dark:bg-gray-800 text-black dark:text-white`}
       style={{ transition: 'transform 0.3s ease-in-out' }}
     >
+      <div className="p-4">
+      <button
+        className="p-2 rounded bg-gray-200 dark:bg-gray-700"
+        onClick={toggleDarkMode}
+      >
+        {isDarkMode ? '☀ Light Mode' : '🌑 Dark Mode'}
+      </button>
       <div className="flex flex-col h-full justify-between p-4">
         {/* Contenido del Sidebar */}
         <div>
@@ -50,6 +60,7 @@ function Sidebar() {
             <i className="pi pi-sign-out mr-2"></i> Log out
           </button>
         </div>
+      </div>
       </div>
     </div>
   );
