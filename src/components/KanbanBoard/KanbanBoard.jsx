@@ -180,11 +180,11 @@ const KanbanBoard = () => {
                 <div
                   ref={provided.innerRef}
                   {...provided.droppableProps}
-                  className="bg-gray-100 p-4 rounded-lg w-80"
+                  className="bg-gray-100 p-4 rounded-lg w-80 dark:bg-gray-900 text-black "
                   style={{ minHeight: '300px' }}
                 >
-                  <div className="flex justify-between items-center mb-2">
-                    <h2 className="font-semibold text-lg text-gray-700">{project.title}</h2>
+                  <div className="flex justify-between items-center mb-2 ">
+                    <h2 className="font-semibold text-lg text-gray-700 dark:text-white">{project.title}</h2>
                     <button
                       onClick={() => {
                         setCurrentProjectId(project.id);
@@ -205,7 +205,7 @@ const KanbanBoard = () => {
                           ref={provided.innerRef}
                           {...provided.draggableProps}
                           {...provided.dragHandleProps}
-                          className="bg-white p-4 rounded-lg shadow-md mb-4"
+                          className="bg-white p-4 rounded-lg shadow-md mb-4 dark:bg-indigo-900"
                         >
                           <TaskCard task={task} />
                         </div>
@@ -222,7 +222,7 @@ const KanbanBoard = () => {
         {/* Project Modal */}
         {showProjectModal && (
           <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center z-50">
-            <div className="bg-white p-6 rounded-lg">
+            <div className="bg-white p-6 rounded-lg dark:bg-gray-900 text-black dark:text-white">
               <input
                 type="text"
                 value={newProjectTitle}
@@ -243,31 +243,31 @@ const KanbanBoard = () => {
         {/* Task Modal */}
         {showTaskModal && (
           <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center z-50">
-            <div className="bg-white p-6 rounded-lg">
+            <div className="bg-white p-6 rounded-lg dark:bg-gray-900 text-black dark:text-white">
               <h3 className="text-lg font-semibold mb-4">Add New Task</h3>
               <input
                 type="text"
                 value={taskForm.title}
                 onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })}
-                className="w-full p-2 mb-4 border border-gray-300 rounded-md"
+                className="w-full p-2 mb-4 border border-gray-300 rounded-md dark:text-black"
                 placeholder="Task Title"
               />
               <textarea
                 value={taskForm.description}
                 onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })}
-                className="w-full p-2 mb-4 border border-gray-300 rounded-md"
+                className="w-full p-2 mb-4 border border-gray-300 rounded-md dark:text-black"
                 placeholder="Task Description"
               />
               <input
                 type="date"
                 value={taskForm.date}
                 onChange={(e) => setTaskForm({ ...taskForm, date: e.target.value })}
-                className="w-full p-2 mb-4 border border-gray-300 rounded-md"
+                className="w-full p-2 mb-4 border border-gray-300 rounded-md dark:text-black"
               />
               <select
                 value={taskForm.priority}
                 onChange={(e) => setTaskForm({ ...taskForm, priority: e.target.value })}
-                className="w-full p-2 mb-4 border border-gray-300 rounded-md"
+                className="w-full p-2 mb-4 border border-gray-300 rounded-md dark:text-black"
               >
                 <option value="high">High</option>
                 <option value="medium">Medium</option>
@@ -277,7 +277,7 @@ const KanbanBoard = () => {
                 type="color"
                 value={taskForm.color}
                 onChange={(e) => setTaskForm({ ...taskForm, color: e.target.value })}
-                className="w-full p-2 mb-4 border border-gray-300 rounded-md"
+                className="w-full p-2 mb-4 border border-gray-300 rounded-md dark:text-black"
               />
               <button
                 onClick={handleCreateTask}

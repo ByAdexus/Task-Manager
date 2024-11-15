@@ -19,10 +19,11 @@ function TaskCard({ task }) {
   };
 
   return (
-    <div className="bg-white shadow-lg rounded-lg p-4 flex justify-between items-center mb-4 transform hover:scale-105 transition-transform duration-300 ease-in-out hover:shadow-xl">
+    <div className="bg-white shadow-lg rounded-lg p-4 flex justify-between items-center mb-4 transform hover:scale-105 transition-transform duration-300 ease-in-out hover:shadow-xl
+    dark:bg-indigo-900 ">
       <div className="flex flex-col">
-        <span className="font-medium text-gray-800 text-lg">{task.title}</span>
-        {task.description && <p className="text-sm text-gray-600 mt-2">{task.description}</p>}
+        <span className="font-medium text-gray-800 text-lg dark:text-white">{task.title}</span>
+        {task.description && <p className="text-sm text-gray-600 mt-2 dark:text-gray-300">{task.description}</p>}
       </div>
       
       <div className="flex space-x-2">
@@ -41,28 +42,28 @@ function TaskCard({ task }) {
       {/* Modal de edición */}
       {isEditing && (
         <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-4 rounded-lg shadow-lg">
-            <h2 className="text-xl font-bold mb-4">Editar Tarea</h2>
+          <div className="bg-white p-4 rounded-lg shadow-lg dark:bg-gray-900 text-black dark:text-white">
+            <h2 className="text-xl font-bold mb-4 ">Editar Tarea</h2>
             
             <input
               type="text"
               value={editedTask.title}
               onChange={(e) => setEditedTask({ ...editedTask, title: e.target.value })}
-              className="border p-2 mb-2 w-full rounded"
+              className="border p-2 mb-2 w-full rounded dark:text-black"
               placeholder="Título de la tarea"
             />
             <textarea
               value={editedTask.description}
               onChange={(e) => setEditedTask({ ...editedTask, description: e.target.value })}
-              className="border p-2 mb-2 w-full rounded"
+              className="border p-2 mb-2 w-full rounded dark:text-black"
               placeholder="Descripción de la tarea"
             />
 
             <div className="flex justify-end space-x-2">
-              <button onClick={() => setIsEditing(false)} className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">
+              <button onClick={() => setIsEditing(false)} className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 dark:text-black">
                 Cancelar
               </button>
-              <button onClick={handleSaveClick} className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+              <button onClick={handleSaveClick} className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 ">
                 Guardar
               </button>
             </div>

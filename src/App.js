@@ -13,11 +13,11 @@ function App() {
     <DarkMode>
       <div className="min-h-screen bg-white dark:bg-gray-900 text-black dark:text-white">
     <Router>
-      <div className="min-h-screen bg-gray-100 dark:bg-gray-800 text-black dark:text-white">
+      <div className="min-w-max bg-gray-100 dark:bg-gray-800 text-black dark:text-white">
         <Header />
-        <div className="flex">
+        <div className="flex min-h-screen bg-gray-100 dark:bg-gray-800 text-black dark:text-white">
           <Sidebar />
-          <div className="flex-grow p-4">
+          <div className="flex-grow p-4 min-h-screen bg-gray-100 dark:bg-gray-800 text-black dark:text-white">
             <Routes >
             <Route path="/" element={<KanbanBoard />} />
               <Route path="/dashboard" element={<Dashboard />} />

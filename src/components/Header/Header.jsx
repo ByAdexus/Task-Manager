@@ -111,10 +111,10 @@ function Header() {
 
   return (
     <header className="flex items-center justify-between p-4 bg-white rounded-lg shadow-md relative z-20 pl-64
-    dark:bg-gray-800 text-black dark:text-white">
+    dark:bg-gray-800 text-black dark:text-white dark:shadow-white">
       <div className="flex items-center space-x-2 w-1/3">
         <InputText
-          className="p-2 w-full border border-gray-300 rounded-lg"
+          className="p-2 w-full border border-gray-300 rounded-lg dark:text-black"
           placeholder="Search"
           icon="pi pi-search"
         />
@@ -141,7 +141,8 @@ function Header() {
         {showNotifications && (
           <div
             ref={notificationsRef}
-            className="absolute right-0 top-7 mt-10 bg-white border shadow-lg rounded-lg w-64 p-4"
+            className="absolute right-0 top-7 mt-10 bg-white border shadow-lg rounded-lg w-64 p-4
+            dark:bg-gray-900 text-black dark:text-white"
           >
             <h4 className="font-semibold text-lg mb-2">Task Notifications</h4>
             {notifications.length > 0 ? (
@@ -156,7 +157,7 @@ function Header() {
                       key={index}
                       className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200 cursor-pointer"
                     >
-                      <strong>{task.title}</strong>
+                      <strong className="dark:text-black">{task.title}</strong>
                       <p className="text-sm text-gray-600">
                         Due on:{" "}
                         {isValidDate
@@ -173,7 +174,7 @@ function Header() {
                 })}
               </ul>
             ) : (
-              <p className="text-sm text-gray-600">No tasks due soon.</p>
+              <p className="text-sm text-gray-600 dark:bg-gray-900 dark:text-white">No tasks due soon.</p>
             )}
           </div>
         )}
@@ -198,7 +199,7 @@ function Header() {
 
       {showModal && (
         <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded-lg w-96">
+          <div className="bg-white p-6 rounded-lg w-96 dark:bg-gray-900 text-black dark:text-white">
             <h3 className="text-xl font-semibold mb-4">
               Create or Select User
             </h3>
@@ -210,7 +211,7 @@ function Header() {
                 onChange={(e) =>
                   setNewUserData({ ...newUserData, name: e.target.value })
                 }
-                className="p-2 border border-gray-300 rounded-lg w-full mb-4"
+                className="p-2 border border-gray-300 rounded-lg w-full mb-4 dark:text-black"
                 placeholder="Enter user name"
               />
             </div>
@@ -222,7 +223,7 @@ function Header() {
                 onChange={(e) =>
                   setNewUserData({ ...newUserData, email: e.target.value })
                 }
-                className="p-2 border border-gray-300 rounded-lg w-full mb-4"
+                className="p-2 border border-gray-300 rounded-lg w-full mb-4 dark:text-black"
                 placeholder="Enter email"
               />
             </div>
@@ -263,7 +264,7 @@ function Header() {
               </button>
               <button
                 onClick={() => setShowModal(false)}
-                className="p-2 bg-gray-500 text-white rounded-lg w-1/2"
+                className="p-2 bg-gray-500 text-white rounded-lg w-1/2 dark:text-black"
               >
                 Cancel
               </button>
