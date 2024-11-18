@@ -167,6 +167,58 @@ const KanbanBoard = () => {
     });
   };
 
+  // Efecto  para recargar las tareas del cache cuando se modifique
+useEffect(() => {
+  const loadTasksFromCache = async () => {
+    const loadedTasks = await getAllProjects();
+    setData(loadedTasks);
+  };
+
+  loadTasksFromCache();
+}, [data.tasks]); // Actualizar cuando cambie `data.tasks`
+
+const updateTaskInState = (taskId, updatedTask) => {
+  setData((prevData) => ({
+    ...prevData,
+    tasks: {
+      ...prevData.tasks,
+      [taskId]: updatedTask
+    }
+  }));
+  storeAllProjects({
+    ...data,
+    tasks: {
+      ...data.tasks,
+      [taskId]: updatedTask
+    }
+  });
+};
+
+const deleteTaskInState = (taskId) => {
+  setData((prevData) => {
+    const updatedTasks = { ...prevData.tasks };
+    delete updatedTasks[taskId];
+
+    const updatedProjects = { ...prevData.projects };
+    Object.values(updatedProjects).forEach((project) => {
+      project.taskIds = project.taskIds.filter((id) => id !== taskId);
+    });
+
+    return {
+      ...prevData,
+      projects: updatedProjects,
+      tasks: updatedTasks
+    };
+  });
+
+  storeAllProjects({
+    ...data,
+    tasks: data.tasks,
+    projects: data.projects
+  });
+};
+
+
   return (
     <DragDropContext onDragEnd={onDragEnd}>
       <div className="flex p-6 space-x-4 ml-64">
@@ -207,7 +259,11 @@ const KanbanBoard = () => {
                           {...provided.dragHandleProps}
                           className="bg-white p-4 rounded-lg shadow-md mb-4 dark:bg-indigo-900"
                         >
-                          <TaskCard task={task} />
+                          <TaskCard 
+  task={task} 
+  updateTaskInState={updateTaskInState} 
+  deleteTaskInState={deleteTaskInState} 
+/>
                         </div>
                       )}
                     </Draggable>
@@ -221,8 +277,14 @@ const KanbanBoard = () => {
 
         {/* Project Modal */}
         {showProjectModal && (
-          <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center z-50">
-            <div className="bg-white p-6 rounded-lg dark:bg-gray-900 text-black dark:text-white">
+          <div
+          className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center z-50"
+          onClick={() => setShowProjectModal(false)} // Detecta clics en el fondo
+        >
+          <div
+            className="bg-white p-6 rounded-lg dark:bg-gray-900 text-black dark:text-white relative"
+            onClick={(e) => e.stopPropagation()} // Evita cerrar el modal al hacer clic dentro de él
+          >
               <input
                 type="text"
                 value={newProjectTitle}
@@ -242,8 +304,20 @@ const KanbanBoard = () => {
 
         {/* Task Modal */}
         {showTaskModal && (
-          <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center z-50">
-            <div className="bg-white p-6 rounded-lg dark:bg-gray-900 text-black dark:text-white">
+          <div
+          className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center z-50"
+          onClick={() => setShowTaskModal(false)} // Detecta clics en el fondo
+        >
+          <div
+            className="bg-white p-6 rounded-lg dark:bg-gray-900 text-black dark:text-white relative"
+            onClick={(e) => e.stopPropagation()} // Evita cerrar el modal al hacer clic dentro de él
+          >
+            <button
+        onClick={() => setShowTaskModal(false)}
+        className="absolute top-2 right-2 text-gray-700 dark:text-white"
+      >
+        X
+      </button>
               <h3 className="text-lg font-semibold mb-4">Add New Task</h3>
               <input
                 type="text"
