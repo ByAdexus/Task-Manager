@@ -1,7 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import TaskCard from '../TaskCard/TaskCard';
-import { storeProject, getAllProjects, storeTask, storeAllProjects, getTask } from '../../services/storageService';
+import { 
+  storeProject, 
+  getAllProjects, 
+  storeTask, 
+  storeAllProjects, 
+  getTask,
+  getOrGenerateSeed,
+  syncCacheWithFirebase,
+  isLocalCacheNewer,
+  downloadCacheFromFirebase,
+ } from '../../services/storageService';
 
 /*
 const clearCache = () => {
@@ -28,98 +38,85 @@ const KanbanBoard = () => {
     color: '#000000',
   });
 
-  // Load all projects and tasks from cache on component mount
+  const firebaseUrl = 'https://your-firebase-url.firebaseio.com'; // Replace with your Firebase URL
+  const [seed, setSeed] = useState(null);
+
+  // Load all projects and tasks from cache or Firebase on component mount
   const loadProjects = async () => {
-    const cachedProjects = await getAllProjects();
-    if (cachedProjects) {
+    const localCache = await getAllProjects();
+
+    if (!localCache) {
+      console.log('Local cache is empty. Fetching from Firebase...');
+      const remoteCache = await downloadCacheFromFirebase(firebaseUrl, seed);
+      if (remoteCache) {
+        setData({
+          projects: remoteCache.projects,
+          projectOrder: remoteCache.projectOrder,
+          tasks: remoteCache.tasks || {},
+        });
+      }
+    } else {
       setData({
-        projects: cachedProjects.projects,
-        projectOrder: cachedProjects.projectOrder,
-        tasks: cachedProjects.tasks || {}, // Ensure tasks are loaded from cache
+        projects: localCache.projects,
+        projectOrder: localCache.projectOrder,
+        tasks: localCache.tasks || {},
       });
     }
   };
 
   useEffect(() => {
-    loadProjects(); // Load projects when the component mounts
+    const initialize = async () => {
+      // Ensure seed exists and is consistent
+      const resolvedSeed = await getOrGenerateSeed(firebaseUrl);
+      setSeed(resolvedSeed);
+
+      // Load projects and tasks
+      await loadProjects();
+
+      // Set up cache synchronization
+      window.addEventListener('online', async () => {
+        console.log('Internet connection restored. Syncing cache...');
+        await syncCacheWithFirebase(firebaseUrl, isLocalCacheNewer);
+      });
+    };
+
+    initialize();
+
+    return () => {
+      window.removeEventListener('online', syncCacheWithFirebase);
+    };
   }, []);
 
-  // Fetch task by ID, fallback to cache if not available in state
-  const getTaskFromStateOrCache = async (taskId) => {
-    if (data.tasks[taskId]) {
-      return data.tasks[taskId]; // Return from state if available
-    }
-    // If not in state, try to get it from cache
-    const task = await getTask(taskId);
-    if (task) {
-      setData((prevData) => ({
-        ...prevData,
-        tasks: { ...prevData.tasks, [taskId]: task }, // Store the task in state
-      }));
-    }
-    return task;
-  };
   const handleCreateProject = async () => {
     const newProject = {
       id: `project-${Date.now()}`, // Simple unique ID based on timestamp
       title: newProjectTitle,
       taskIds: [],
     };
-  
-    // Update the state with the new project
+
     const updatedProjects = {
       ...data.projects,
       [newProject.id]: newProject,
     };
     const updatedProjectOrder = [...data.projectOrder, newProject.id];
-  
+
     setData({
       projects: updatedProjects,
       projectOrder: updatedProjectOrder,
-      tasks: data.tasks, // Ensure tasks are not lost
+      tasks: data.tasks,
     });
-  
-    // Save the new project to the cache
+
+    // Save the new project to the cache and sync with Firebase
     await storeProject(newProject);
-  
-    // Store all projects (with new one added)
     await storeAllProjects({
       projects: updatedProjects,
       projectOrder: updatedProjectOrder,
-      tasks: data.tasks, // Ensure tasks are also stored
+      tasks: data.tasks,
     });
-  
-    // Clear the modal input
+    await syncCacheWithFirebase(firebaseUrl, isLocalCacheNewer);
+
     setNewProjectTitle('');
     setShowProjectModal(false);
-  };
-
-  const onDragEnd = (result) => {
-    const { destination, source } = result;
-
-    if (!destination) return;
-    if (source.droppableId === destination.droppableId && source.index === destination.index) {
-      return;
-    }
-
-    const updatedProjects = { ...data.projects };
-    const sourceProject = updatedProjects[source.droppableId];
-    const destinationProject = updatedProjects[destination.droppableId];
-
-    // Move the task between columns
-    const [removed] = sourceProject.taskIds.splice(source.index, 1);
-    destinationProject.taskIds.splice(destination.index, 0, removed);
-
-    setData({
-      ...data,
-      projects: updatedProjects,
-    });
-
-    storeAllProjects({
-      projects: updatedProjects,
-      projectOrder: data.projectOrder,
-      tasks: data.tasks, // Store tasks as well
-    });
   };
 
   const handleCreateTask = async () => {
@@ -131,7 +128,7 @@ const KanbanBoard = () => {
     }
 
     const task = {
-      id: `task-${Date.now()}`, // Unique ID for the task
+      id: `task-${Date.now()}`,
       title,
       description,
       date,
@@ -146,16 +143,18 @@ const KanbanBoard = () => {
     setData({
       ...data,
       projects: updatedProjects,
-      tasks: { ...data.tasks, [task.id]: task }, // Store task in state immediately
+      tasks: { ...data.tasks, [task.id]: task },
     });
 
-    await storeTask(task); // Store in cache
-    await storeProject(project); // Store project with updated task list
+    // Save the task and sync with Firebase
+    await storeTask(task);
+    await storeProject(project);
     await storeAllProjects({
       projects: updatedProjects,
       projectOrder: data.projectOrder,
-      tasks: { ...data.tasks, [task.id]: task }, // Store tasks as well
+      tasks: { ...data.tasks, [task.id]: task },
     });
+    await syncCacheWithFirebase(firebaseUrl, isLocalCacheNewer);
 
     setShowTaskModal(false);
     setTaskForm({
@@ -165,6 +164,35 @@ const KanbanBoard = () => {
       priority: 'medium',
       color: '#000000',
     });
+  };
+
+  const onDragEnd = (result) => {
+    const { destination, source } = result;
+
+    if (!destination) return;
+    if (source.droppableId === destination.droppableId && source.index === destination.index) {
+      return;
+    }
+
+    const updatedProjects = { ...data.projects };
+    const sourceProject = updatedProjects[source.droppableId];
+    const destinationProject = updatedProjects[destination.droppableId];
+
+    const [removed] = sourceProject.taskIds.splice(source.index, 1);
+    destinationProject.taskIds.splice(destination.index, 0, removed);
+
+    setData({
+      ...data,
+      projects: updatedProjects,
+    });
+
+    // Sync changes with Firebase
+    storeAllProjects({
+      projects: updatedProjects,
+      projectOrder: data.projectOrder,
+      tasks: data.tasks,
+    });
+    syncCacheWithFirebase(firebaseUrl, isLocalCacheNewer);
   };
 
   return (
