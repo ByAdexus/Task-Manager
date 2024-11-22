@@ -217,6 +217,34 @@ const deleteTaskInState = (taskId) => {
   });
   syncCacheWithFirebase(firebaseUrl, isLocalCacheNewer);
 };
+const onDragEnd = (result) => {
+  const { destination, source } = result;
+
+  if (!destination) return;
+  if (source.droppableId === destination.droppableId && source.index === destination.index) {
+    return;
+  }
+
+  const updatedProjects = { ...data.projects };
+  const sourceProject = updatedProjects[source.droppableId];
+  const destinationProject = updatedProjects[destination.droppableId];
+
+  const [removed] = sourceProject.taskIds.splice(source.index, 1);
+  destinationProject.taskIds.splice(destination.index, 0, removed);
+
+  setData({
+    ...data,
+    projects: updatedProjects,
+  });
+
+  // Sync changes with Firebase
+  storeAllProjects({
+    projects: updatedProjects,
+    projectOrder: data.projectOrder,
+    tasks: data.tasks,
+  });
+  syncCacheWithFirebase(firebaseUrl, isLocalCacheNewer);
+};
 
 
   return (

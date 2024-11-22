@@ -7,6 +7,7 @@ import Productivity from "./components/Productivity/Productivity.jsx";
 import Tasks from "./components/Task/Tasks.jsx";
 import KanbanBoard from "./components/KanbanBoard/KanbanBoard.jsx";
 import { DarkMode } from './services/DarkMode.js';
+import Settings from "./components/userSettings/settings.jsx";
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/tasks" element={<Tasks />} />
               <Route path="/productivity" element={<Productivity />} />
+              <Route path="/settings" element={<Settings/>} />
             </Routes>
           </div>
         </div>
