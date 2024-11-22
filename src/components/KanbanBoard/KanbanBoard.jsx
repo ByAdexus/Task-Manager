@@ -166,15 +166,7 @@ const KanbanBoard = () => {
     });
   };
 
-  // Efecto  para recargar las tareas del cache cuando se modifique
-useEffect(() => {
-  const loadTasksFromCache = async () => {
-    const loadedTasks = await getAllProjects();
-    setData(loadedTasks);
-  };
 
-  loadTasksFromCache();
-}, [data.tasks]); // Actualizar cuando cambie `data.tasks`
 
 const updateTaskInState = (taskId, updatedTask) => {
   setData((prevData) => ({
@@ -252,7 +244,12 @@ const onDragEnd = (result) => {
       <div className="flex p-6 space-x-4 ml-64">
         {data.projectOrder.map((projectId) => {
           const project = data.projects[projectId];
-          const tasks = project.taskIds.map((taskId) => data.tasks[taskId]);
+          // Validar si el proyecto y sus tareas existen
+  if (!project || !project.taskIds) return null;
+
+          const tasks = project.taskIds
+    .map((taskId) => data.tasks[taskId])
+    .filter((task) => task); // Filtra tareas nulas
 
           return (
             <Droppable droppableId={project.id} key={project.id}>

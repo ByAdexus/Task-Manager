@@ -4,7 +4,7 @@ import Header from "./components/Header/Header.jsx";
 import Sidebar from "./components/Sidebar/Sidebar.jsx";
 import Dashboard from "./components/Dashboard/Dashboard.jsx";
 import Productivity from "./components/Productivity/Productivity.jsx";
-import Tasks from "./components/Task/Tasks.jsx";
+import Task from "./components/Task/Tasks.jsx";
 import KanbanBoard from "./components/KanbanBoard/KanbanBoard.jsx";
 import { DarkMode } from './services/DarkMode.js';
 import Settings from "./components/userSettings/settings.jsx";
@@ -22,7 +22,7 @@ function App() {
             <Routes >
             <Route path="/" element={<KanbanBoard />} />
               <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/tasks" element={<Tasks />} />
+              <Route path="/task" element={<Task />} />
               <Route path="/productivity" element={<Productivity />} />
               <Route path="/settings" element={<Settings/>} />
             </Routes>
