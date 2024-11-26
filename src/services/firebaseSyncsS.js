@@ -37,7 +37,7 @@ export const listAllBoards = async (firebaseUrl) => {
 };
 
 export const getOrGenerateSeed = async (firebaseUrl) => {
-  const seedKey = "current-seed";
+  const seedKey = "1234";
   let seed = await getFromCache(seedKey);
 
   if (!seed) {
@@ -60,7 +60,7 @@ export const getOrGenerateSeed = async (firebaseUrl) => {
   }
 
   if (!seed) {
-    seed = uuidv4().slice(0, 8);
+    seed = uuidv4().slice(0, 4);
     console.log("Generated new seed:", seed);
 
     await storeInCache(seedKey, seed);

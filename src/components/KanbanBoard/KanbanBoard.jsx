@@ -34,22 +34,9 @@ const KanbanBoard = () => {
   const firebaseUrl = "https://task-magnament-default-rtdb.firebaseio.com"; // Replace with your Firebase URL
   const [seed, setSeed] = useState(null);
 
-
-  const clearCache = () => {
-    if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
-      navigator.serviceWorker.controller.postMessage("clearCache");
-    }
-  };
-
-  // Call this function when you want to reset the cache (for example, when the page loads or through a button)
-  clearCache();
-
-
-  
   // Load all projects and tasks from cache or Firebase on component mount
   const loadProjects = async () => {
     const localCache = await getAllProjects(seed);  // Use seed to fetch specific data
-  
     if (!localCache) {
       console.log("Local cache is empty. Fetching from Firebase...");
       const remoteCache = await downloadBoardCacheFromFirebase(
@@ -63,14 +50,14 @@ const KanbanBoard = () => {
           tasks: remoteCache.tasks || {},
         });
       }
-    } else {
+    } /*else {
       setData({
         projects: localCache.projects,
         projectOrder: localCache.projectOrder,
         tasks: localCache.tasks || {},
-      });
+      });*/
     }
-  };
+
   
   useEffect(() => {
     const initialize = async () => {
@@ -337,7 +324,7 @@ const KanbanBoard = () => {
                 type="text"
                 value={newProjectTitle}
                 onChange={(e) => setNewProjectTitle(e.target.value)}
-                className="p-2 border-b border-gray-300 focus:outline-none"
+                className="p-2 border-b border-gray-300 focus:outline-none dark:text-black"
                 placeholder="Enter project title"
               />
               <button

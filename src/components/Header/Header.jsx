@@ -25,40 +25,46 @@ function Header() {
 
   const notificationsRef = useRef(null);
 
+
+
+
+ 
   // Load users and initialize notifications on mount
+  const loadUsers = async () => {
+    const generatedSeed = await getOrGenerateSeed("https://task-magnament-default-rtdb.firebaseio.com");
+    setSeed(generatedSeed);
+    console.log(generatedSeed);
+    const cachedUsers = await getAllUsers(generatedSeed);
+    if (cachedUsers.length > 0) {
+      setUsers(cachedUsers);
+      setCurrentUserId(cachedUsers[0].id); // Set the first user as current user
+    } 
+    /*if(){
+      // Create a default user if no users are found
+      const defaultUser = {
+        id: `user-${Date.now()}`,
+        name: "New User",
+        email: "newuser@example.com",
+        image: null,
+      };
+      await storeUserData(seed, defaultUser, null); // Save default user with seed
+      setUsers([defaultUser]);
+      setCurrentUserId(defaultUser.id);
+    }*/
+
+    // Generate or retrieve the seed
+
+  };
+
+  loadUsers(seed);
+  const initializeNotifications = async () => {
+    await requestNotificationPermission();
+    const dueNotifications = await checkTasksDueDates();
+    setNotifications(dueNotifications || []);
+  };
+
+ 
   useEffect(() => {
-    const loadUsers = async () => {
-      const cachedUsers = await getAllUsers();
-      if (cachedUsers.length > 0) {
-        setUsers(cachedUsers);
-        setCurrentUserId(cachedUsers[0].id); // Set the first user as current user
-      } else {
-        // Create a default user if no users are found
-        const defaultUser = {
-          id: `user-${Date.now()}`,
-          name: "New User",
-          email: "newuser@example.com",
-          image: null,
-        };
-        await storeUserData(seed, defaultUser, null); // Save default user with seed
-        setUsers([defaultUser]);
-        setCurrentUserId(defaultUser.id);
-      }
-
-      // Generate or retrieve the seed
-      const generatedSeed = await getOrGenerateSeed();
-      setSeed(generatedSeed);
-    };
-
-    const initializeNotifications = async () => {
-      await requestNotificationPermission();
-      const dueNotifications = await checkTasksDueDates();
-      setNotifications(dueNotifications || []);
-    };
-
-    loadUsers();
-    initializeNotifications();
-
     const handleClickOutside = (event) => {
       if (
         notificationsRef.current &&
