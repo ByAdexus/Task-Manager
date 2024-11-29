@@ -6,10 +6,11 @@ import Dashboard from "./components/Dashboard/Dashboard.jsx";
 import Productivity from "./components/Productivity/Productivity.jsx";
 import Task from "./components/Task/Tasks.jsx";
 import KanbanBoard from "./components/KanbanBoard/KanbanBoard.jsx";
-import { DarkMode } from './services/DarkMode.js';
+import { DarkMode } from "./services/DarkMode.js";
 import Settings from "./components/userSettings/settings.jsx";
-import { getAllUsers } from "./services/storageService";  // Assuming this gets all users
-import { getOrGenerateSeed } from './services/storageService.js'; 
+import { getAllUsers } from "./services/storageService"; // Assuming this gets all users
+import { getOrGenerateSeed } from "./services/storageService.js";
+import { FirebaseProvider } from "./services/FirebaseContext.js";
 
 function App() {
   const [users, setUsers] = useState([]);
@@ -33,23 +34,26 @@ function App() {
   return (
     <DarkMode>
       <div className="min-h-screen bg-white dark:bg-gray-900 text-black dark:text-white">
-        <Router>
-          <div className="min-w-max bg-gray-100 dark:bg-gray-800 text-black dark:text-white">
-            <Header />
-            <div className="flex min-h-screen bg-gray-100 dark:bg-gray-800 text-black dark:text-white">
-              <Sidebar />
-              <div className="flex-grow p-4 min-h-screen bg-gray-100 dark:bg-gray-800 text-black dark:text-white">
-                <Routes>
-                  <Route path="/" element={<KanbanBoard users={users} seed={seed} setSeed={setSeed} />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/task" element={<Task />} />
-                  <Route path="/productivity" element={<Productivity />} />
-                  <Route path="/settings" element={<Settings />} />
-                </Routes>
+        <FirebaseProvider>
+          <Router>
+            <div className="min-w-max bg-gray-100 dark:bg-gray-800 text-black dark:text-white">
+              <Header />
+              <div className="flex min-h-screen bg-gray-100 dark:bg-gray-800 text-black dark:text-white">
+                <Sidebar />
+                <div className="flex-grow p-4 min-h-screen bg-gray-100 dark:bg-gray-800 text-black dark:text-white">
+                  <Routes>
+                    <Route path="/" element={<Task />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/tasks" element={<Task />} />
+                    <Route path="/productivity" element={<Productivity />} />
+                    <Route path="/settings" element={<Settings />} />
+                    <Route path="/kanban/:seed" element={<KanbanBoard />} />
+                  </Routes>
+                </div>
               </div>
             </div>
-          </div>
-        </Router>
+          </Router>
+        </FirebaseProvider>
       </div>
     </DarkMode>
   );

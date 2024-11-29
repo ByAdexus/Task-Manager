@@ -33,7 +33,6 @@ function Header() {
   const loadUsers = async () => {
     const generatedSeed = await getOrGenerateSeed("https://task-magnament-default-rtdb.firebaseio.com");
     setSeed(generatedSeed);
-    console.log(generatedSeed);
     const cachedUsers = await getAllUsers(generatedSeed);
     if (cachedUsers.length > 0) {
       setUsers(cachedUsers);
@@ -56,15 +55,16 @@ function Header() {
 
   };
 
-  loadUsers(seed);
-  const initializeNotifications = async () => {
-    await requestNotificationPermission();
-    const dueNotifications = await checkTasksDueDates();
-    setNotifications(dueNotifications || []);
-  };
+
 
  
   useEffect(() => {
+    loadUsers(seed);
+    const initializeNotifications = async () => {
+      await requestNotificationPermission();
+      const dueNotifications = await checkTasksDueDates();
+      setNotifications(dueNotifications || []);
+    };
     const handleClickOutside = (event) => {
       if (
         notificationsRef.current &&

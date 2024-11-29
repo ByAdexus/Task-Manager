@@ -32,7 +32,7 @@ function Sidebar() {
           </Link>
         </li>
         <li className="p-3 flex items-center text-gray-600 hover:bg-yellow-200 hover:text-black rounded dark:text-white dark:hover:bg-yellow-main">
-          <Link to="/Tasks" className="flex items-center w-full">
+          <Link to="/tasks" className="flex items-center w-full">
             <i className="pi pi-check-circle mr-2"></i> My Tasks
           </Link>
         </li>

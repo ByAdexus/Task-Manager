@@ -1,54 +1,71 @@
 import { storeInCache, getFromCache, deleteFromCache } from './cacheUtils';
 
 // Tasks
-export const storeTask = async (seed, task) => {
-  const key = `${seed}-task-${task.id}`;
-  await storeInCache(key, task);
+export const storeTask = async (boardSeed, task) => {
+  const key = `${boardSeed}-task-${task.id}`;  // Use boardSeed to generate a unique key
+  await storeInCache(key, task);  // Store task in cache
 };
 
-export const getTask = async (seed, taskId) => {
-  const key = `${seed}-task-${taskId}`;
-  return await getFromCache(key);
+// Get task specific to a board (using the board's seed)
+export const getTask = async (boardSeed, taskId) => {
+  const key = `${boardSeed}-task-${taskId}`;  // Use boardSeed to generate a unique key
+  return await getFromCache(key);  // Retrieve task from cache
 };
 
-// Edit a task
-export const editTask = async (seed, taskId, updatedData) => {
-  const task = await getTask(seed, taskId);
+// Edit task specific to a board
+export const editTask = async (boardSeed, taskId, updatedData) => {
+  const task = await getTask(boardSeed, taskId);
   if (task) {
     const updatedTask = { ...task, ...updatedData };
-    await storeTask(seed, updatedTask);
+    await storeTask(boardSeed, updatedTask);
   }
 };
 
-// Delete a task
-export const deleteTask = async (seed, taskId) => {
-  const key = `${seed}-task-${taskId}`;
-  await deleteFromCache(key);
+// Delete task specific to a board
+export const deleteTask = async (boardSeed, taskId) => {
+  const key = `${boardSeed}-task-${taskId}`;
+  await deleteFromCache(key);  // Delete task from cache
 };
 
 // Projects
-export const storeProject = async (seed, project) => {
+// Store project specific to a board (using the board's seed)
+export const storeProject = async (boardSeed, project) => {
   if (!project || !project.id) {
     console.error("Invalid project object:", project);
     return;
   }
-  const key = `${seed}-project-${project.id}`;
-  await storeInCache(key, project);
+  const key = `${boardSeed}-project-${project.id}`;  // Use boardSeed to generate a unique key
+  await storeInCache(key, project);  // Store project in cache
 };
 
-export const getProject = async (seed, projectId) => {
-  const key = `${seed}-project-${projectId}`;
-  return await getFromCache(key);
+// Get a project specific to a board (using the board's seed)
+export const getProject = async (boardSeed, projectId) => {
+  const key = `${boardSeed}-project-${projectId}`;  // Use boardSeed to generate a unique key
+  return await getFromCache(key);  // Retrieve project from cache
 };
 
-export const storeAllProjects = async (seed, projects) => {
-  const key = `${seed}-projects`;
-  await storeInCache(key, projects);
+// Store all projects specific to a board
+export const storeAllProjects = async (firebaseUrl, data) => {
+  try {
+    const response = await fetch(`${firebaseUrl}/boards/${data.seed}.json`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to store projects: ${response.statusText}`);
+    }
+  } catch (error) {
+    console.error("Error storing projects:", error);
+  }
 };
 
-export const getAllProjects = async (seed) => {
-  const key = `${seed}-projects`;
-  return await getFromCache(key);
+
+// Get all projects specific to a board
+export const getAllProjects = async (boardSeed) => {
+  const key = `${boardSeed}-projects`;  // Use boardSeed to generate a unique key for all projects
+  return await getFromCache(key);  // Retrieve all projects for the board from cache
 };
-
-

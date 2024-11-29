@@ -12,6 +12,23 @@ function Settings() {
   };
 
 
+  const wipeAllData = async () => {
+    try {
+      const response = await fetch(`${"https://task-magnament-default-rtdb.firebaseio.com/"}.json`, {
+        method: "DELETE", // HTTP DELETE request
+      });
+  
+      if (response.ok) {
+        alert("All data has been wiped out from the database!");
+      } else {
+        alert("Error while wiping data from the database.");
+      }
+    } catch (error) {
+      alert("Error: " + error.message);
+    }
+  };
+
+
 
   return (
     <div
@@ -29,7 +46,19 @@ className='flex p-6 space-x-4 ml-64'
       >
         Limpiar Cache
       </button>
+
+
+
+      <button
+        onClick={() => wipeAllData()}
+        className="bg-red-400 text-white p-2  rounded shadow-lg hover:bg-red-600"
+      >
+        Wipe All Data
+      </button>
     </div>
+
+
+
   );
 }
 
