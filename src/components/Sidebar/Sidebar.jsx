@@ -33,12 +33,12 @@ function Sidebar() {
         </li>
         <li className="p-3 flex items-center text-gray-600 hover:bg-yellow-200 hover:text-black rounded dark:text-white dark:hover:bg-yellow-main">
           <Link to="/tasks" className="flex items-center w-full">
-            <i className="pi pi-check-circle mr-2"></i> My Tasks
+            <i className="pi pi-check-circle mr-2"></i> Mis tableros
           </Link>
         </li>
         <li className="p-3 flex items-center text-gray-600 hover:bg-yellow-200 hover:text-black rounded dark:text-white dark:hover:bg-yellow-main">
           <Link to="/Productivity" className="flex items-center w-full">
-            <i className="pi pi-chart-bar mr-2"></i> Productivity Charts
+            <i className="pi pi-chart-bar mr-2"></i> Progresos
           </Link>
         </li>
         <li className="p-3 w-full flex items-center text-gray-600 hover:bg-yellow-200 hover:text-black rounded mb-2 dark:text-white dark:hover:bg-yellow-main">

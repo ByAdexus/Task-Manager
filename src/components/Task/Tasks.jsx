@@ -10,17 +10,16 @@ const Task = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newBoardName, setNewBoardName] = useState("");
 
+  const fetchBoards = async () => {
+    // Pass firebaseUrl to listDeviceBoards function to fetch boards
+    const boardsFromCache = await listDeviceBoards(firebaseUrl);
+    if (boardsFromCache && Array.isArray(boardsFromCache)) {
+      setBoards(boardsFromCache); // Update state with boards fetched from Firebase or cache
+    } else {
+      setBoards([]); // If no boards, set as an empty array
+    }
+  };
   useEffect(() => {
-    const fetchBoards = async () => {
-      // Pass firebaseUrl to listDeviceBoards function to fetch boards
-      const boardsFromCache = await listDeviceBoards(firebaseUrl);
-      if (boardsFromCache && Array.isArray(boardsFromCache)) {
-        setBoards(boardsFromCache); // Update state with boards fetched from Firebase or cache
-      } else {
-        setBoards([]); // If no boards, set as an empty array
-      }
-    };
-
     fetchBoards();
   }, [firebaseUrl]);
 
@@ -56,7 +55,7 @@ const Task = () => {
       {/* Modal for creating new board */}
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-1/3">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-1/3 dark:bg-gray-900">
             <h2 className="text-xl mb-4">Create a New Board</h2>
             <input
               type="text"

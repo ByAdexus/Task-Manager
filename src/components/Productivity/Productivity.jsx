@@ -2,14 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { RadialBarChart, RadialBar, Legend, ResponsiveContainer } from 'recharts';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import { getAllProjects } from '../..//services/storageService';
+import { useFirebaseContext } from '../../services/FirebaseContext';
 
 const Productivity = () => {
   const [chartData, setChartData] = useState([]);
   const [barData, setBarData] = useState([]);
-
+  const { seed } = useFirebaseContext();
   useEffect(() => {
     const fetchData = async () => {
-      const data = await getAllProjects();
+      const data = await getAllProjects(seed);
       const { projects, projectOrder, tasks } = data;
 
       // Contar el total de tareas en todos los proyectos

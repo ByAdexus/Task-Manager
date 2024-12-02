@@ -7,6 +7,7 @@ import {
   storeTask,
   storeAllProjects,
   downloadBoardCacheFromFirebase,
+  uploadBoardCacheToFirebase,
   syncCacheWithFirebase,
   isLocalCacheNewer,
 } from "../../services/storageService";
@@ -111,6 +112,7 @@ const KanbanBoard = () => {
       tasks: data.tasks,
     });
     await syncCacheWithFirebase(getAllProjects(seed), firebaseUrl);
+    await uploadBoardCacheToFirebase(seed, data , firebaseUrl);
 
     setNewProjectTitle("");
     setShowProjectModal(false);
@@ -150,6 +152,7 @@ const KanbanBoard = () => {
       tasks: { ...data.tasks, [task.id]: task },
     });
     await syncCacheWithFirebase(getAllProjects(seed), firebaseUrl);
+    await uploadBoardCacheToFirebase(seed, data , firebaseUrl);
 
     setShowTaskModal(false);
     setTaskForm({
@@ -191,6 +194,7 @@ const KanbanBoard = () => {
       tasks: data.tasks,
     });
     syncCacheWithFirebase(boardUrl, seed);
+    uploadBoardCacheToFirebase(seed, data , firebaseUrl);
   };
   const updateTaskInState = (taskId, updatedTask) => {
     setData((prevData) => {

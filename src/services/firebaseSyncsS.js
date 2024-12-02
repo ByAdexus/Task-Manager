@@ -49,7 +49,9 @@ export const listDeviceBoards = async (firebaseUrl) => {
 
       // Store the boards locally in cache
       await storeInCache('boards', allBoards);
-      return Object.entries(allBoards); // Return boards from Firebase
+      return Object.entries(allBoards).filter(
+        ([key, board]) => board.deviceKey === deviceKey
+      ); // Return boards from Firebase
     }
 
     // If boards are available in cache, return them
