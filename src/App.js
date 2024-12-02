@@ -47,7 +47,7 @@ function App() {
                     <Route path="/tasks" element={<Task />} />
                     <Route path="/productivity" element={<Productivity />} />
                     <Route path="/settings" element={<Settings />} />
-                    <Route path="/kanban/:seed" element={<KanbanBoard />} />
+                    <Route path="/kanban" element={<KanbanBoard />} />
                   </Routes>
                 </div>
               </div>

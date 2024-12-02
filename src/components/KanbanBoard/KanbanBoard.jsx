@@ -12,10 +12,11 @@ import {
 } from "../../services/storageService";
 import { useFirebaseContext } from "../../services/FirebaseContext";
 
-const KanbanBoard = ({ }) => {
-  const { seed } = useFirebaseContext(); // Get the seed from URL
-  const { firebaseUrl } = useFirebaseContext(); // Get firebaseUrl from context
-  // State Management
+const KanbanBoard = () => {
+  const { seed, firebaseUrl } = useFirebaseContext();
+
+  const boardUrl = `${firebaseUrl}/boards/${seed}`;
+
   const [data, setData] = useState({
     projects: {},
     projectOrder: [],
@@ -34,102 +35,50 @@ const KanbanBoard = ({ }) => {
     color: "#000000",
   });
 
-  // Initialization and Synchronization
   useEffect(() => {
     const loadProjects = async () => {
-      const localCache = await getAllProjects(seed);
-      if (!localCache) {
+      const localCache = await getAllProjects(seed); // Get cached data
+   
+    
+      if (!localCache || !localCache.projects) {
         console.log("Local cache is empty. Fetching from Firebase...");
         const remoteCache = await downloadBoardCacheFromFirebase(firebaseUrl, seed);
+    
         if (remoteCache) {
           setData({
-            projects: remoteCache.projects,
-            projectOrder: remoteCache.projectOrder,
+            projects: remoteCache.projects || {},
+            projectOrder: remoteCache.projectOrder || [],
             tasks: remoteCache.tasks || {},
           });
+    
+          // Save the fetched data to cache for next use
+          storeAllProjects(seed, remoteCache);
         }
       } else {
         setData({
-          projects: localCache.projects,
-          projectOrder: localCache.projectOrder,
+          projects: localCache.projects || {},
+          projectOrder: localCache.projectOrder || [],
           tasks: localCache.tasks || {},
         });
       }
     };
-
-    const initialize = async () => {
-      await loadProjects();
-      window.addEventListener("online", async () => {
-        console.log("Internet connection restored. Syncing cache...");
-        await syncCacheWithFirebase(firebaseUrl, seed);
-      });
-    };
-
-    initialize();
-
+    
+  
+    loadProjects();
+  
+    // Define the sync function to be added as event listener
+    const syncCache = () => syncCacheWithFirebase(getAllProjects(seed), firebaseUrl);
+  
+    // Add online event listener for sync
+    window.addEventListener("online", syncCache);
+  
+    // Clean up event listener on component unmount
     return () => {
-      window.removeEventListener("online", syncCacheWithFirebase);
+      window.removeEventListener("online", syncCache);
     };
-  }, [seed, firebaseUrl]);
+  }, [seed, firebaseUrl]); // Dependencies to watch
+  
 
-  // Helper Functions
-  const updateTaskInState = async (taskId, updatedTask) => {
-    const updatedTasks = { ...data.tasks, [taskId]: updatedTask };
-
-    // Update task in projects
-    const updatedProjects = { ...data.projects };
-    Object.keys(updatedProjects).forEach((projectId) => {
-      const project = updatedProjects[projectId];
-      if (project.taskIds.includes(taskId)) {
-        updatedProjects[projectId] = { ...project }; // Trigger reactivity
-      }
-    });
-
-    setData({
-      ...data,
-      tasks: updatedTasks,
-      projects: updatedProjects,
-    });
-
-    const boardUrl = `${firebaseUrl}/boards/${seed}.json`;
-
-    await storeAllProjects(boardUrl, {
-      projects: updatedProjects,
-      projectOrder: data.projectOrder,
-      tasks: updatedTasks,
-    });
-    await syncCacheWithFirebase(firebaseUrl, seed);
-  };
-
-  const deleteTaskInState = async (taskId) => {
-    const updatedTasks = { ...data.tasks };
-    delete updatedTasks[taskId];
-
-    const updatedProjects = { ...data.projects };
-    Object.keys(updatedProjects).forEach((projectId) => {
-      const project = updatedProjects[projectId];
-      if (project.taskIds.includes(taskId)) {
-        project.taskIds = project.taskIds.filter((id) => id !== taskId);
-      }
-    });
-
-    setData({
-      ...data,
-      tasks: updatedTasks,
-      projects: updatedProjects,
-    });
-
-    const boardUrl = `${firebaseUrl}/boards/${seed}.json`;
-
-    await storeAllProjects(boardUrl, {
-      projects: updatedProjects,
-      projectOrder: data.projectOrder,
-      tasks: updatedTasks,
-    });
-    await syncCacheWithFirebase(firebaseUrl, seed);
-  };
-
-  // Project and Task Management
   const handleCreateProject = async () => {
     if (!newProjectTitle.trim()) {
       alert("Project title is required.");
@@ -137,7 +86,7 @@ const KanbanBoard = ({ }) => {
     }
 
     const newProject = {
-      id: `project-${seed}-${Date.now()}`, // Include the seed to associate it with the board
+      id: `project-${seed}-${Date.now()}`,
       title: newProjectTitle,
       taskIds: [],
     };
@@ -155,20 +104,17 @@ const KanbanBoard = ({ }) => {
       tasks: data.tasks,
     });
 
-    const boardUrl = `${firebaseUrl}/boards/${seed}.json`;
-
-    await storeProject(boardUrl, newProject);
-    await storeAllProjects(boardUrl, {
+    await storeProject(seed, newProject);
+    await storeAllProjects(seed, {
       projects: updatedProjects,
       projectOrder: updatedProjectOrder,
       tasks: data.tasks,
     });
-    await syncCacheWithFirebase(boardUrl, seed);
+    await syncCacheWithFirebase(getAllProjects(seed), firebaseUrl);
 
     setNewProjectTitle("");
     setShowProjectModal(false);
   };
-
   const handleCreateTask = async () => {
     const { title, description, date, priority, color } = taskForm;
 
@@ -196,16 +142,14 @@ const KanbanBoard = ({ }) => {
       tasks: { ...data.tasks, [task.id]: task },
     });
 
-    const boardUrl = `${firebaseUrl}/boards/${seed}.json`;
-
-    await storeTask(boardUrl, task);  // Store task using the board's seed
-    await storeProject(boardUrl, project);  // Store the updated project with the new task
-    await storeAllProjects(boardUrl, {
+    await storeTask(seed, task); // Store task using the board's seed
+    await storeProject(seed, project); // Store the updated project with the new task
+    await storeAllProjects(seed, {
       projects: updatedProjects,
       projectOrder: data.projectOrder,
       tasks: { ...data.tasks, [task.id]: task },
     });
-    await syncCacheWithFirebase(boardUrl, seed);
+    await syncCacheWithFirebase(getAllProjects(seed), firebaseUrl);
 
     setShowTaskModal(false);
     setTaskForm({
@@ -241,27 +185,43 @@ const KanbanBoard = ({ }) => {
       projects: updatedProjects,
     });
 
-    const boardUrl = `${firebaseUrl}/boards/${seed}.json`;
-
-    storeAllProjects(boardUrl, {
+    storeAllProjects(seed, {
       projects: updatedProjects,
       projectOrder: data.projectOrder,
       tasks: data.tasks,
     });
     syncCacheWithFirebase(boardUrl, seed);
   };
+  const updateTaskInState = (taskId, updatedTask) => {
+    setData((prevData) => {
+      const updatedTasks = { ...prevData.tasks, [taskId]: updatedTask };
+      return { ...prevData, tasks: updatedTasks };
+    });
+  };
 
+  const deleteTaskInState = (taskId) => {
+    setData((prevData) => {
+      const updatedTasks = { ...prevData.tasks };
+      delete updatedTasks[taskId];
+      return { ...prevData, tasks: updatedTasks };
+    });
+  };
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>
-      <div className="flex p-6 space-x-4 ml-64">
-        {data.projectOrder.map((projectId) => {
+    <div className="flex p-6 space-x-4 ml-64">
+      {data.projectOrder.length > 0 ? (
+        data.projectOrder.map((projectId) => {
           const project = data.projects[projectId];
-          if (!project || !project.taskIds) return null;
+          if (!project || !project.taskIds) {
+
+            return null;
+          }
 
           const tasks = project.taskIds
             .map((taskId) => data.tasks[taskId])
             .filter((task) => task); // Filter out null tasks
+
 
           return (
             <Droppable droppableId={project.id} key={project.id}>
@@ -269,10 +229,10 @@ const KanbanBoard = ({ }) => {
                 <div
                   ref={provided.innerRef}
                   {...provided.droppableProps}
-                  className="bg-gray-100 p-4 rounded-lg w-80 dark:bg-gray-900 text-black "
+                  className="bg-gray-100 p-4 rounded-lg w-80 dark:bg-gray-900 text-black"
                   style={{ minHeight: "300px" }}
                 >
-                  <div className="flex justify-between items-center mb-2 ">
+                  <div className="flex justify-between items-center mb-2">
                     <h2 className="font-semibold text-lg text-gray-700 dark:text-white">
                       {project.title}
                     </h2>
@@ -289,44 +249,53 @@ const KanbanBoard = ({ }) => {
 
                   <hr className="border-t-2 border-gray-300 mb-4" />
 
-                  {tasks.map((task, index) => (
-                    <Draggable
-                      key={task.id}
-                      draggableId={task.id}
-                      index={index}
-                    >
-                      {(provided) => (
-                        <div
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          className="bg-white p-4 rounded-lg shadow-md mb-4 dark:bg-indigo-900"
-                        >
-                          <TaskCard
-                            task={task}
-                            updateTaskInState={updateTaskInState}
-                            deleteTaskInState={deleteTaskInState}
-                          />
-                        </div>
-                      )}
-                    </Draggable>
-                  ))}
+                  {tasks.length > 0 ? (
+                    tasks.map((task, index) => (
+                      <Draggable key={task.id} draggableId={task.id} index={index}>
+                        {(provided) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                            className="bg-white p-4 rounded-lg shadow-md mb-4 dark:bg-indigo-900"
+                          >
+                            <TaskCard
+                              task={task}
+                              updateTaskInState={updateTaskInState}
+                              deleteTaskInState={deleteTaskInState}
+                            />
+                          </div>
+                        )}
+                      </Draggable>
+                    ))
+                  ) : (
+                    <div>No tasks in this project</div>
+                  )}
+
                   {provided.placeholder}
                 </div>
               )}
             </Droppable>
           );
-        })}
+        })
+      ) : (
+        <div className="text-center w-full">
+          <p className="text-gray-500 text-lg dark:text-gray-300">
+            No projects available. Click the + button to create a new project.
+          </p>
+        </div>
+      )}
+
 
         {/* Project Modal */}
         {showProjectModal && (
           <div
             className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center z-50"
-            onClick={() => setShowProjectModal(false)} // Detecta clics en el fondo
+            onClick={() => setShowProjectModal(false)}
           >
             <div
               className="bg-white p-6 rounded-lg dark:bg-gray-900 text-black dark:text-white relative"
-              onClick={(e) => e.stopPropagation()} // Evita cerrar el modal al hacer clic dentro de él
+              onClick={(e) => e.stopPropagation()}
             >
               <input
                 type="text"
@@ -349,11 +318,11 @@ const KanbanBoard = ({ }) => {
         {showTaskModal && (
           <div
             className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center z-50"
-            onClick={() => setShowTaskModal(false)} // Detecta clics en el fondo
+            onClick={() => setShowTaskModal(false)}
           >
             <div
               className="bg-white p-6 rounded-lg dark:bg-gray-900 text-black dark:text-white relative"
-              onClick={(e) => e.stopPropagation()} // Evita cerrar el modal al hacer clic dentro de él
+              onClick={(e) => e.stopPropagation()}
             >
               <button
                 onClick={() => setShowTaskModal(false)}
@@ -420,14 +389,12 @@ const KanbanBoard = ({ }) => {
       {/* Floating Button for Adding Projects */}
       <button
         onClick={() => setShowProjectModal(true)}
-        className="fixed bottom-4 right-4 bg-green-500 text-white p-4 rounded-full shadow-lg z-60" // Adjusted z-index here
+        className="fixed bottom-4 right-4 bg-green-500 text-white p-4 rounded-full shadow-lg z-60"
       >
         +
       </button>
     </DragDropContext>
   );
 };
-
-
 
 export default KanbanBoard;

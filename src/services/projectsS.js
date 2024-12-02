@@ -29,14 +29,28 @@ export const deleteTask = async (boardSeed, taskId) => {
 
 // Projects
 // Store project specific to a board (using the board's seed)
+// Projects
+// Store project specific to a board (using the board's seed)
 export const storeProject = async (boardSeed, project) => {
   if (!project || !project.id) {
     console.error("Invalid project object:", project);
     return;
   }
+
+  // Ensure the project is stored under the board's seed
   const key = `${boardSeed}-project-${project.id}`;  // Use boardSeed to generate a unique key
   await storeInCache(key, project);  // Store project in cache
+
+  // Update project order in cache (keeping track of project order within the board)
+  const currentProjects = await getAllProjects(boardSeed);
+
+  // Check if currentProjects is an array and initialize it if it's not
+  const updatedProjects = Array.isArray(currentProjects) ? [...currentProjects, project.id] : [project.id];
+
+  // Store updated project order after adding the new project
+  await storeAllProjects(boardSeed, updatedProjects);
 };
+
 
 // Get a project specific to a board (using the board's seed)
 export const getProject = async (boardSeed, projectId) => {
@@ -45,27 +59,35 @@ export const getProject = async (boardSeed, projectId) => {
 };
 
 // Store all projects specific to a board
-export const storeAllProjects = async (firebaseUrl, data) => {
+export const storeAllProjects = async (boardSeed, cacheData) => {
   try {
-    const response = await fetch(`${firebaseUrl}/boards/${data.seed}.json`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
+    // Store the entire data object (projects, projectOrder, tasks)
+    const dataToStore = {
+      projects: cacheData.projects,
+      projectOrder: cacheData.projectOrder,
+      tasks: cacheData.tasks,
+    };
 
-    if (!response.ok) {
-      throw new Error(`Failed to store projects: ${response.statusText}`);
-    }
+    // Store the updated data for the board
+    await storeInCache(`${boardSeed}-projects`, dataToStore);
+
+    // Optionally, store this data remotely if needed (e.g., in Firebase or a DB)
+
   } catch (error) {
-    console.error("Error storing projects:", error);
+    console.error("Error storing all projects:", error);
   }
 };
 
 
 // Get all projects specific to a board
-export const getAllProjects = async (boardSeed) => {
-  const key = `${boardSeed}-projects`;  // Use boardSeed to generate a unique key for all projects
-  return await getFromCache(key);  // Retrieve all projects for the board from cache
+export const getAllProjects = async (seed) => {
+  const cacheKey = `${seed}-projects`; // Ensure this matches what you're using
+  const cachedProjects = await getFromCache(cacheKey);
+
+  if (!cachedProjects) {
+    console.log("No valid cache data found.");
+    return null; // Or return default data structure
+  }
+
+  return cachedProjects;
 };

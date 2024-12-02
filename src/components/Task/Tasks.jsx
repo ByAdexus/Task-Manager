@@ -12,10 +12,12 @@ const Task = () => {
 
   useEffect(() => {
     const fetchBoards = async () => {
-      // Pass firebaseUrl to listDeviceBoards function
+      // Pass firebaseUrl to listDeviceBoards function to fetch boards
       const boardsFromCache = await listDeviceBoards(firebaseUrl);
-      if (boardsFromCache) {
-        setBoards(boardsFromCache);
+      if (boardsFromCache && Array.isArray(boardsFromCache)) {
+        setBoards(boardsFromCache); // Update state with boards fetched from Firebase or cache
+      } else {
+        setBoards([]); // If no boards, set as an empty array
       }
     };
 
@@ -25,12 +27,13 @@ const Task = () => {
   const handleBoardClick = (seed) => {
     // Set the seed in the context and navigate to the Kanban board
     setSeed(seed);
-    navigate(`/kanban/${seed}`); // Only pass the seed in the URL, firebaseUrl is already stored in the context
+    console.log("Navigating to board with seed:", seed);
+    navigate(`/kanban`); // Navigate with the seed as part of the route
   };
 
   const handleCreateBoard = async () => {
     // Create the board with the name provided by the user
-    const newBoard = await createNewBoard(firebaseUrl, newBoardName); 
+    const newBoard = await createNewBoard(firebaseUrl, newBoardName);
     if (newBoard) {
       setBoards((prevBoards) => [...prevBoards, newBoard]); // Add new board to the state
     }
@@ -83,13 +86,15 @@ const Task = () => {
         {Array.isArray(boards) && boards.length > 0 ? (
           boards.map((board) => (
             <div
-              key={board.seed} // Use `seed` as a unique key
-              onClick={() => handleBoardClick(board.seed)} // Navigate to selected board
+              key={board[0]} // Use the seed (board[0]) as the unique key for the board
+              onClick={() => handleBoardClick(board[0])} // Pass the seed (board[0]) here for navigation
               className="cursor-pointer bg-gray-100 p-4 rounded-lg shadow-md dark:bg-gray-900 hover:bg-gray-200 dark:hover:bg-gray-800 transition"
             >
+              {/* Display the board name */}
               <h2 className="text-lg font-bold text-gray-700 dark:text-white">
-                {board.name || "Untitled Board"} {/* Display board name */}
+              {board[1]?.name || "NEW BOARD"}{/* Display board name */}
               </h2>
+              {/* You can also display other board details here */}
             </div>
           ))
         ) : (

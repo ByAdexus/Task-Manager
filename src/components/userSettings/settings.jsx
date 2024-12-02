@@ -5,6 +5,33 @@ function Settings() {
   const { isDarkMode, toggleDarkMode } = useDarkMode();
   const [visible, setVisible] = useState(true);
 
+
+
+
+  //delete later:
+  const logAllCacheData = async () => {
+    const cacheNames = await caches.keys(); // Get all cache names
+    //console.log("Cache Names:", cacheNames);  // Log all cache names
+  
+    for (const cacheName of cacheNames) {
+      const cache = await caches.open(cacheName);
+      const requests = await cache.keys(); // Get all request keys in the cache
+      
+      //console.log(`Cache: ${cacheName}`);
+      
+      // Log each cached request and its corresponding data
+      for (const request of requests) {
+        const response = await cache.match(request);  // Get data for the request
+        const data = await response.json();  // Assuming data is stored as JSON
+        //console.log(`Key: ${request.url} - Data:`, data);
+      }
+    }
+  };
+  
+  // Call the function to log all cache data
+  logAllCacheData();
+
+
   const clearCacheHandler = async () => {
     if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
       navigator.serviceWorker.controller.postMessage("clearCache");
