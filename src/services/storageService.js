@@ -8,7 +8,8 @@ import {
   syncCacheWithFirebase, 
   setupEventListeners, 
   getOrGenerateSeed, 
-  isLocalCacheNewer 
+  isLocalCacheNewer,
+  updateBoardBySeed,
 } from './firebaseSyncsS';
 
 export {
@@ -20,22 +21,23 @@ export {
   getProject,
   storeAllProjects,
   getAllProjects,
-
+//
   storeUserData,
   getUserData,
   getUserImage,
   getAllUsers,
-
+//
   checkTasksDueDates,
   sendTaskDueNotification,
   requestNotificationPermission,
-
-  consolidateCacheBySeed,  // Corrected name
-  uploadBoardCacheToFirebase,  // Corrected name
-  downloadBoardCacheFromFirebase,  // Corrected name
+//
+  consolidateCacheBySeed, 
+  uploadBoardCacheToFirebase, 
+  downloadBoardCacheFromFirebase,  
   syncCacheWithFirebase,
   setupEventListeners,
   getOrGenerateSeed,
   isLocalCacheNewer,
-
+  updateBoardBySeed,
+//
 };

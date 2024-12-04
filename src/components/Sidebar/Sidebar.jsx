@@ -7,21 +7,17 @@ function Sidebar() {
 
   return (
     
-    <div
-      className={`bg-white shadow-lg w-64 h-full fixed left-0 top-0 z-30 transform transition-transform duration-300 ${visible ? 'translate-x-0' : '-translate-x-full'}
-      dark:bg-gray-800 text-black dark:text-white dark:shadow-white`}
-      style={{ transition: 'transform 0.3s ease-in-out' }}
-    >
+<div
+  className={`bg-white shadow-lg w-60 z-30 h-screen transform transition-transform duration-300 ${visible ? 'translate-x-0' : '-translate-x-full'}
+    dark:bg-gray-800 text-black dark:text-white dark:shadow-white overflow-y-auto sticky top-0`}
+  style={{ transition: 'transform 0.3s ease-in-out' }}
+>
       <div className="p-4">
       
       <div className="flex flex-col h-full justify-between p-4">
         {/* Contenido del Sidebar */}
         <div>
-          {/* Título y navegación */}
-          <div className="flex items-center mb-4">
-            <div className="bg-yellow-main text-white p-2 rounded-full mr-3">AZ</div>
-            <span className="font-semibold text-lg">Task-Magnament</span>
-          </div>
+
           <nav>
 
           <ul>

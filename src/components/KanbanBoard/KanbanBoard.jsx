@@ -213,7 +213,7 @@ const KanbanBoard = () => {
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>
-    <div className="flex p-6 space-x-4 ml-64">
+    <div className="flex p-6 space-x-4">
       {data.projectOrder.length > 0 ? (
         data.projectOrder.map((projectId) => {
           const project = data.projects[projectId];

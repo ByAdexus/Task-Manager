@@ -42,7 +42,7 @@ const Task = () => {
 
   return (
     <div className="p-6 flex justify-center">
-      <h1 className="text-2xl font-semibold mb-4">Boards:</h1>
+      <h1 className="text-2xl font-semibold mb-4 mr-10">Boards:</h1>
 
       {/* + Button to open modal */}
       <button

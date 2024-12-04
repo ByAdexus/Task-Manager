@@ -42,7 +42,7 @@ function App() {
                 <Sidebar />
                 <div className="flex-grow p-4 min-h-screen bg-gray-100 dark:bg-gray-800 text-black dark:text-white">
                   <Routes>
-                    <Route path="/" element={<Task />} />
+                    <Route path="/" element={<Dashboard />} />
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/tasks" element={<Task />} />
                     <Route path="/productivity" element={<Productivity />} />

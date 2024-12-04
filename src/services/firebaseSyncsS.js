@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { storeInCache, getFromCache } from './cacheUtils';
 
 // Store or retrieve a unique device-specific key
-const getDeviceKey = async () => {
+export const getDeviceKey = async () => {
   let deviceKey = await getFromCache('device-key');
   if (!deviceKey) {
     deviceKey = uuidv4();
@@ -205,6 +205,58 @@ export const uploadBoardCacheToFirebase = async (seed, cacheData, firebaseUrl) =
     console.log("Cache uploaded to Firebase.");
   } catch (error) {
     console.error("Error uploading board cache to Firebase:", error);
+  }
+};
+
+
+
+
+// New function to find a board by seed, update if needed, and store in cache
+export const updateBoardBySeed = async (firebaseUrl, seed) => {
+  try {
+    // Fetch the board data from Firebase using the seed
+    const response = await fetch(`${firebaseUrl}/boards/${seed}.json`);
+    if (!response.ok) {
+      console.error(`Error fetching board with seed ${seed}: ${response.status} - ${response.statusText}`);
+      return null; // Return null if there's an error
+    }
+
+    const firebaseBoardData = await response.json();
+
+    // Check if board is already cached
+    const cachedBoardData = await getFromCache(`board-${seed}`);
+
+    if (!cachedBoardData) {
+      // If no cached data, store the board in the cache
+      await storeInCache(`board-${seed}`, firebaseBoardData);
+      console.log(`Board with seed ${seed} cached successfully.`);
+      return firebaseBoardData; // Return the Firebase board data if it wasn't in cache
+    }
+
+    // If cached board data exists, check if the cache is newer
+    if (isLocalCacheNewer(cachedBoardData.timestamp, firebaseBoardData.timestamp)) {
+      // Cache is newer, update Firebase with the cached data
+      const updateResponse = await fetch(`${firebaseUrl}/boards/${seed}.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(cachedBoardData), // Upload cached data to Firebase
+      });
+
+      if (!updateResponse.ok) {
+        console.error(`Error updating board with seed ${seed} in Firebase.`);
+        return null;
+      }
+
+      console.log(`Board with seed ${seed} updated in Firebase with cached data.`);
+      return cachedBoardData;
+    }
+
+    // Otherwise, return the Firebase board data (it's up-to-date or newer)
+    console.log(`Board with seed ${seed} is up-to-date.`);
+    return firebaseBoardData;
+  } catch (error) {
+    console.error("Error in updateBoardBySeed:", error);
+    return null;
   }
 };
 
