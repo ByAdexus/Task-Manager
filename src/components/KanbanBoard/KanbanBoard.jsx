@@ -12,6 +12,7 @@ import {
   isLocalCacheNewer,
 } from "../../services/storageService";
 import { useFirebaseContext } from "../../services/FirebaseContext";
+import { getDeviceKey } from "../../services/firebaseSyncsS";
 
 const KanbanBoard = () => {
   const { seed, firebaseUrl } = useFirebaseContext();
@@ -20,7 +21,8 @@ const KanbanBoard = () => {
 
   const [data, setData] = useState({
     name: "",
-    seed: seed,
+    deviceKey:"",
+    seed:"",
     projects: {},
     projectOrder: [],
     tasks: {},
@@ -50,6 +52,7 @@ const KanbanBoard = () => {
 
           setData({
             name:remoteCache.name || "Default Board Name",
+            deviceKey: remoteCache.deviceKey || getDeviceKey(),
             seed: remoteCache.seed || seed,
             projects: remoteCache.projects || {},
             projectOrder: remoteCache.projectOrder || [],
@@ -63,6 +66,7 @@ const KanbanBoard = () => {
       
         setData({
           name: localCache.name || "Default Board Name",
+          deviceKey: localCache.deviceKey || getDeviceKey(),
           seed: localCache.seed || seed,
           projects: localCache.projects || {},
           projectOrder: localCache.projectOrder || [],
