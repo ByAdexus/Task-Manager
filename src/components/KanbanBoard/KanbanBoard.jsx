@@ -19,7 +19,8 @@ const KanbanBoard = () => {
   const boardUrl = `${firebaseUrl}/boards/${seed}`;
 
   const [data, setData] = useState({
-    board: {},
+    name: "",
+    seed: seed,
     projects: {},
     projectOrder: [],
     tasks: {},
@@ -46,7 +47,10 @@ const KanbanBoard = () => {
         console.log("Local cache is empty. Fetching from Firebase...");
         const remoteCache = await downloadBoardCacheFromFirebase(firebaseUrl, seed);
         if (remoteCache) {
+
           setData({
+            name:remoteCache.name || "Default Board Name",
+            seed: remoteCache.seed || seed,
             projects: remoteCache.projects || {},
             projectOrder: remoteCache.projectOrder || [],
             tasks: remoteCache.tasks || {},
@@ -56,8 +60,10 @@ const KanbanBoard = () => {
           storeAllProjects(seed, remoteCache);
         }
       } else {
+      
         setData({
-          board:{..."board-"+seed},
+          name: localCache.name || "Default Board Name",
+          seed: localCache.seed || seed,
           projects: localCache.projects || {},
           projectOrder: localCache.projectOrder || [],
           tasks: localCache.tasks || {},
@@ -101,6 +107,7 @@ const KanbanBoard = () => {
     const updatedProjectOrder = [...data.projectOrder, newProject.id];
 
     setData({
+      ...data,
       projects: updatedProjects,
       projectOrder: updatedProjectOrder,
       tasks: data.tasks,
@@ -108,7 +115,7 @@ const KanbanBoard = () => {
 
     await storeProject(seed, newProject);
     await storeAllProjects(seed, {
-      board:{..."board-"+seed},
+      ...data,
       projects: updatedProjects,
       projectOrder: updatedProjectOrder,
       tasks: data.tasks,
@@ -119,44 +126,62 @@ const KanbanBoard = () => {
     setNewProjectTitle("");
     setShowProjectModal(false);
   };
+
+
+
+
   const handleCreateTask = async () => {
     const { title, description, date, priority, color } = taskForm;
-
+  
     if (!title || !description || !date || !priority || !color) {
       alert("Please fill out all fields.");
       return;
     }
-
+  
     const task = {
-      id: `task-${seed}-${Date.now()}`, // Include the seed to associate it with the board
+      id: `task-${seed}-${Date.now()}`,
       title,
       description,
       date,
       priority,
       color,
     };
-
+  
     const updatedProjects = { ...data.projects };
     const project = updatedProjects[currentProjectId];
-    project.taskIds.push(task.id); // Add task to the project
-
+  
+    if (!project) {
+      alert("Project not found!");
+      return;
+    }
+  
+    project.taskIds = [...project.taskIds, task.id];
+  
+    const updatedTasks = { ...data.tasks, [task.id]: task };
+  
     setData({
       ...data,
       projects: updatedProjects,
-      tasks: { ...data.tasks, [task.id]: task },
+      tasks: updatedTasks,
     });
-
-    await storeTask(seed, task); // Store task using the board's seed
-    await storeProject(seed, project); // Store the updated project with the new task
+  
+    // Save data
+    await storeTask(seed, task);
+    await storeProject(seed, project);
     await storeAllProjects(seed, {
-      board:{..."board-"+seed},
+      ...data,
       projects: updatedProjects,
       projectOrder: data.projectOrder,
-      tasks: { ...data.tasks, [task.id]: task },
-    });
-    await syncCacheWithFirebase(getAllProjects(seed), firebaseUrl);
-    await uploadBoardCacheToFirebase(seed, data , firebaseUrl);
+      tasks: updatedTasks,
 
+    });
+  
+    await uploadBoardCacheToFirebase(seed, {
+      ...data,
+      projects: updatedProjects,
+      tasks: updatedTasks,
+    }, firebaseUrl);
+  
     setShowTaskModal(false);
     setTaskForm({
       title: "",
@@ -166,6 +191,11 @@ const KanbanBoard = () => {
       color: "#000000",
     });
   };
+  
+
+
+
+
 
   // Drag-and-Drop Handling
   const onDragEnd = (result) => {
@@ -192,7 +222,7 @@ const KanbanBoard = () => {
     });
 
     storeAllProjects(seed, {
-      board:{..."board-"+seed},
+      ...data,
       projects: updatedProjects,
       projectOrder: data.projectOrder,
       tasks: data.tasks,

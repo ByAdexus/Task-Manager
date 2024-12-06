@@ -63,6 +63,7 @@ export const storeAllProjects = async (boardSeed, cacheData) => {
   try {
     // Store the entire data object (projects, projectOrder, tasks)
     const dataToStore = {
+      board: "board-"+boardSeed,
       projects: cacheData.projects,
       projectOrder: cacheData.projectOrder,
       tasks: cacheData.tasks,
