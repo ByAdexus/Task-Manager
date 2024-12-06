@@ -12,7 +12,7 @@ import {
 import { useFirebaseContext } from "../../services/FirebaseContext";
 
 function Header() {
-  const { seed } = useFirebaseContext();
+  const { firebaseUrl, seed } = useFirebaseContext();
   const [currentUserId, setCurrentUserId] = useState(null);
   const [showShareModal, setShowShareModal] = useState(false); // Separate state for the share modal
   const [showUserModal, setShowUserModal] = useState(false); // Separate state for the share modal
@@ -26,6 +26,7 @@ function Header() {
   const [notifications, setNotifications] = useState([]);
 
   const [boardSeed, setBoardSeed] = useState(seed); // New state for board seed
+
 
   const notificationsRef = useRef(null);
 
@@ -62,7 +63,6 @@ function Header() {
   }, [seed]); // Re-run useEffect if seed changes
 
   const handleSharingClick = async () => {
-    setBoardSeed(seed); // Set the seed for the board
     setShowShareModal(true); // Show sharing modal
   };
 
@@ -71,7 +71,7 @@ function Header() {
     if (boardSeed) {
       try {
         // Save the board to the cache using a single function
-        await updateBoardBySeed(boardSeed); // Call the service function
+        await updateBoardBySeed(firebaseUrl,boardSeed); // Call the service function
         console.log("Board stored successfully.");
         setShowShareModal(false); // Close the modal after storing
       } catch (error) {
@@ -86,21 +86,6 @@ function Header() {
     const file = e.target.files[0];
     if (file) {
       setNewUserData((prev) => ({ ...prev, image: file }));
-    }
-  };
-  const handleUserSelect = async () => {
-    try {
-      // Fetch users from the cache when modal is opened
-      const cachedUsers = await getAllUsers(seed);
-
-      if (cachedUsers.length > 0) {
-        setUsers(cachedUsers);
-      } else {
-        console.log("No users found in cache for this seed.");
-      }
-      setShowUserModal(true);
-    } catch (error) {
-      console.error("Error fetching users: ", error);
     }
   };
 
@@ -249,6 +234,7 @@ function Header() {
             />
             <input
               type="text"
+              onChange={(e) => setBoardSeed(e.target.value)}
               placeholder="Place an external seed here."
               className="p-2 border border-gray-300 rounded-lg w-full mb-4 dark:text-black"
             />

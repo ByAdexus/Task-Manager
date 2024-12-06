@@ -8,7 +8,7 @@ const Task = () => {
   const navigate = useNavigate();
   const [boards, setBoards] = useState([]); // Initialize boards as an empty array
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newBoardName, setNewBoardName] = useState("");
+  const [newBoardName, setNewBoardName] = useState(null);
 
   const fetchBoards = async () => {
     // Pass firebaseUrl to listDeviceBoards function to fetch boards
@@ -32,6 +32,7 @@ const Task = () => {
 
   const handleCreateBoard = async () => {
     // Create the board with the name provided by the user
+    console.log(newBoardName)
     const newBoard = await createNewBoard(firebaseUrl, newBoardName);
     if (newBoard) {
       setBoards((prevBoards) => [...prevBoards, newBoard]); // Add new board to the state
@@ -59,9 +60,9 @@ const Task = () => {
             <h2 className="text-xl mb-4">Create a New Board</h2>
             <input
               type="text"
-              placeholder="Board Name"
-              value={newBoardName}
               onChange={(e) => setNewBoardName(e.target.value)}
+              placeholder="Board Name"
+
               className="border p-2 w-full mb-4 dark:text-black"
             />
             <button

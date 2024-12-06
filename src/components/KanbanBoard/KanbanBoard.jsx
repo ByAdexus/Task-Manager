@@ -19,6 +19,7 @@ const KanbanBoard = () => {
   const boardUrl = `${firebaseUrl}/boards/${seed}`;
 
   const [data, setData] = useState({
+    boards: {},
     projects: {},
     projectOrder: [],
     tasks: {},
@@ -44,7 +45,6 @@ const KanbanBoard = () => {
       if (!localCache || !localCache.projects) {
         console.log("Local cache is empty. Fetching from Firebase...");
         const remoteCache = await downloadBoardCacheFromFirebase(firebaseUrl, seed);
-    
         if (remoteCache) {
           setData({
             projects: remoteCache.projects || {},

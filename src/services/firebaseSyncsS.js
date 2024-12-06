@@ -142,7 +142,7 @@ export const consolidateCacheBySeed = async (seed, localCache, firebaseUrl) => {
 export const downloadBoardCacheFromFirebase = async (firebaseUrl, seed) => {
 
   try {
-    const response = await fetch(`${firebaseUrl}/boards/${seed}.json`);
+    const response = await fetch(`${firebaseUrl}/boards/${seed}/.json`);
     if (response.ok) {
       const boardData = await response.json();
       await storeInCache(`board-${seed}`, boardData); // Store locally
@@ -215,7 +215,7 @@ export const uploadBoardCacheToFirebase = async (seed, cacheData, firebaseUrl) =
 export const updateBoardBySeed = async (firebaseUrl, seed) => {
   try {
     // Fetch the board data from Firebase using the seed
-    const response = await fetch(`${firebaseUrl}/boards/${seed}.json`);
+    const response = await fetch(`${firebaseUrl}/boards/${seed}/.json`);
     if (!response.ok) {
       console.error(`Error fetching board with seed ${seed}: ${response.status} - ${response.statusText}`);
       return null; // Return null if there's an error
