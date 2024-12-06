@@ -74,12 +74,14 @@ function Header() {
         await updateBoardBySeed(firebaseUrl,boardSeed); // Call the service function
         console.log("Board stored successfully.");
         setShowShareModal(false); // Close the modal after storing
+        
       } catch (error) {
         console.error("Error storing board:", error);
       }
     } else {
       console.error("Board seed does not match.");
     }
+
   };
   // Update new user data with selected profile picture
   const handleFileChange = (e) => {

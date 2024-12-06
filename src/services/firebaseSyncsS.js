@@ -26,7 +26,6 @@ export const listDeviceBoards = async (firebaseUrl) => {
   try {
     // Retrieve the boards from local cache first
     let cachedBoards = await getFromCache('boards');
-    console.log(cachedBoards)
     if (!cachedBoards) {
       // If not in cache, fetch data from Firebase
       const response = await fetch(`${firebaseUrl}/boards/.json`);
@@ -178,9 +177,9 @@ export const setupEventListeners = (firebaseUrl, onUpdateCallback) => {
 
 
 // Sync local cache with Firebase
-export const syncCacheWithFirebase = async (localCache, firebaseUrl) => {
+export const syncCacheWithFirebase = async (localCache, firebaseUrl,boardSeed) => {
   try {
-    await fetch(`${firebaseUrl}/boards/.json`, {
+    await fetch(`${firebaseUrl}/boards/${boardSeed}/.json`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(localCache),

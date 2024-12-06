@@ -9,7 +9,6 @@ import {
   downloadBoardCacheFromFirebase,
   uploadBoardCacheToFirebase,
   syncCacheWithFirebase,
-  isLocalCacheNewer,
 } from "../../services/storageService";
 import { useFirebaseContext } from "../../services/FirebaseContext";
 import { getDeviceKey } from "../../services/firebaseSyncsS";
@@ -50,6 +49,7 @@ const KanbanBoard = () => {
         const remoteCache = await downloadBoardCacheFromFirebase(firebaseUrl, seed);
         if (remoteCache) {
 
+
           setData({
             name:remoteCache.name || "Default Board Name",
             deviceKey: remoteCache.deviceKey || getDeviceKey(),
@@ -79,7 +79,7 @@ const KanbanBoard = () => {
     loadProjects();
   
     // Define the sync function to be added as event listener
-    const syncCache = () => syncCacheWithFirebase(getAllProjects(seed), firebaseUrl);
+    const syncCache = () => syncCacheWithFirebase(data, firebaseUrl, seed);
   
     // Add online event listener for sync
     window.addEventListener("online", syncCache);
@@ -124,7 +124,7 @@ const KanbanBoard = () => {
       projectOrder: updatedProjectOrder,
       tasks: data.tasks,
     });
-    await syncCacheWithFirebase(getAllProjects(seed), firebaseUrl);
+    await syncCacheWithFirebase(data, firebaseUrl, seed);
     await uploadBoardCacheToFirebase(seed, data , firebaseUrl);
 
     setNewProjectTitle("");
@@ -231,7 +231,7 @@ const KanbanBoard = () => {
       projectOrder: data.projectOrder,
       tasks: data.tasks,
     });
-    syncCacheWithFirebase(boardUrl, seed);
+    syncCacheWithFirebase(data, firebaseUrl, seed);
     uploadBoardCacheToFirebase(seed, data , firebaseUrl);
   };
   const updateTaskInState = (taskId, updatedTask) => {
