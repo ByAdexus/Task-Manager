@@ -39,6 +39,7 @@ const Task = () => {
     }
     setIsModalOpen(false); // Close modal after creating a board
     setNewBoardName(""); // Clear the input field after board creation
+    fetchBoards();
   };
 
   return (
