@@ -19,7 +19,7 @@ const KanbanBoard = () => {
   const boardUrl = `${firebaseUrl}/boards/${seed}`;
 
   const [data, setData] = useState({
-    boards: {},
+    board: {},
     projects: {},
     projectOrder: [],
     tasks: {},
@@ -57,6 +57,7 @@ const KanbanBoard = () => {
         }
       } else {
         setData({
+          board:{..."board-"+seed},
           projects: localCache.projects || {},
           projectOrder: localCache.projectOrder || [],
           tasks: localCache.tasks || {},
@@ -107,6 +108,7 @@ const KanbanBoard = () => {
 
     await storeProject(seed, newProject);
     await storeAllProjects(seed, {
+      board:{..."board-"+seed},
       projects: updatedProjects,
       projectOrder: updatedProjectOrder,
       tasks: data.tasks,
@@ -147,6 +149,7 @@ const KanbanBoard = () => {
     await storeTask(seed, task); // Store task using the board's seed
     await storeProject(seed, project); // Store the updated project with the new task
     await storeAllProjects(seed, {
+      board:{..."board-"+seed},
       projects: updatedProjects,
       projectOrder: data.projectOrder,
       tasks: { ...data.tasks, [task.id]: task },
@@ -189,6 +192,7 @@ const KanbanBoard = () => {
     });
 
     storeAllProjects(seed, {
+      board:{..."board-"+seed},
       projects: updatedProjects,
       projectOrder: data.projectOrder,
       tasks: data.tasks,

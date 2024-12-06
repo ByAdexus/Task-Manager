@@ -26,7 +26,7 @@ export const listDeviceBoards = async (firebaseUrl) => {
   try {
     // Retrieve the boards from local cache first
     let cachedBoards = await getFromCache('boards');
-    
+    console.log(cachedBoards)
     if (!cachedBoards) {
       // If not in cache, fetch data from Firebase
       const response = await fetch(`${firebaseUrl}/boards/.json`);
@@ -115,7 +115,7 @@ export const createNewBoard = async (firebaseUrl, boardName) => {
 // Consolidate cache using a specific seed
 export const consolidateCacheBySeed = async (seed, localCache, firebaseUrl) => {
   try {
-    const response = await fetch(`${firebaseUrl}/boards/${seed}.json`);
+    const response = await fetch(`${firebaseUrl}/boards/${seed}/.json`);
     if (response.ok) {
       const remoteCache = await response.json();
       
@@ -197,7 +197,7 @@ export const syncCacheWithFirebase = async (localCache, firebaseUrl) => {
 // Upload local cache to Firebase
 export const uploadBoardCacheToFirebase = async (seed, cacheData, firebaseUrl) => {
   try {
-    await fetch(`${firebaseUrl}/boards/${seed}.json`, {
+    await fetch(`${firebaseUrl}/boards/${seed}/.json`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(cacheData),
@@ -236,7 +236,7 @@ export const updateBoardBySeed = async (firebaseUrl, seed) => {
     // If cached board data exists, check if the cache is newer
     if (isLocalCacheNewer(cachedBoardData.timestamp, firebaseBoardData.timestamp)) {
       // Cache is newer, update Firebase with the cached data
-      const updateResponse = await fetch(`${firebaseUrl}/boards/${seed}.json`, {
+      const updateResponse = await fetch(`${firebaseUrl}/boards/${seed}/.json`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(cachedBoardData), // Upload cached data to Firebase

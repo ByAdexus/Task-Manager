@@ -76,8 +76,8 @@ className='flex p-6 space-x-4 ml-64'
 
 
 
-      {/* <button
-        //onClick={() => wipeAllData()}
+      {/*a <button
+        onClick={() => wipeAllData()}
         className="bg-red-400 text-white p-2  rounded shadow-lg hover:bg-red-600"
       >
         Wipe All Data [admin only]
