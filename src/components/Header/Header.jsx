@@ -6,12 +6,17 @@ import {
   getAllUsers,
   checkTasksDueDates,
   requestNotificationPermission,
-  getUserImage,
+  getOrGenerateSeed,
+  updateBoardBySeed,
 } from "../../services/storageService";
+import { useFirebaseContext } from "../../services/FirebaseContext";
 
 function Header() {
+  const { firebaseUrl, seed } = useFirebaseContext();
   const [currentUserId, setCurrentUserId] = useState(null);
-  const [showModal, setShowModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false); // Separate state for the share modal
+  const [showUserModal, setShowUserModal] = useState(false); // Separate state for the share modal
+  const [showNotificationsModal, setShowNotificationsModal] = useState(false); // Separate state for notifications modal
   const [newUserData, setNewUserData] = useState({
     name: "",
     email: "",
@@ -19,88 +24,65 @@ function Header() {
   });
   const [users, setUsers] = useState([]);
   const [notifications, setNotifications] = useState([]);
-  const [showNotifications, setShowNotifications] = useState(false);
+
+  const [boardSeed, setBoardSeed] = useState(seed); // New state for board seed
+
 
   const notificationsRef = useRef(null);
 
   // Load users and initialize notifications on mount
-  useEffect(() => {
-    const loadUsers = async () => {
-      const cachedUsers = await getAllUsers();
-      if (cachedUsers.length > 0) {
-        setUsers(cachedUsers);
-        setCurrentUserId(cachedUsers[0].id);
-      } else {
-        const defaultUser = {
-          id: `user-${Date.now()}`,
-          name: "New User",
-          email: "newuser@example.com",
-          image: null,
-        };
-        await storeUserData(defaultUser);
-        setUsers([defaultUser]);
-        setCurrentUserId(defaultUser.id);
-      }
-    };
+  const loadUsers = async () => {
+    const cachedUsers = await getAllUsers(seed);
+    if (cachedUsers.length > 0) {
+      setUsers(cachedUsers);
+      setCurrentUserId(cachedUsers[0].id); // Set the first user as current user
+    }
+  };
 
+  useEffect(() => {
+    loadUsers(seed);
     const initializeNotifications = async () => {
       await requestNotificationPermission();
-      const dueNotifications = await checkTasksDueDates();
+      const dueNotifications = await checkTasksDueDates(seed);
       setNotifications(dueNotifications || []);
     };
-
-    loadUsers();
     initializeNotifications();
-
     const handleClickOutside = (event) => {
       if (
         notificationsRef.current &&
         !notificationsRef.current.contains(event.target)
       ) {
-        setShowNotifications(false);
+        setShowNotificationsModal(false); // Close notifications modal if clicked outside
+        setShowUserModal(false);
+        setShowShareModal(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
 
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [seed]); // Re-run useEffect if seed changes
 
-  // Fetch users whenever the modal opens to ensure we have the latest data
-  const handleUserSelect = async () => {
-    const cachedUsers = await getAllUsers();
-    setUsers(cachedUsers);
-    setShowModal(true);
+  const handleSharingClick = async () => {
+    setShowShareModal(true); // Show sharing modal
   };
 
-  // Handle creating a new user
-  const handleCreateUser = async () => {
-    if (newUserData.name && newUserData.email) {
-      const userId = `user-${Date.now()}`;
-      const userData = { ...newUserData, id: userId };
-      await storeUserData(userData, newUserData.image);
-
-      // Refetch users after storing new user data
-      const updatedUsers = await getAllUsers();
-      setUsers(updatedUsers); // Update state with the latest users
-      setCurrentUserId(userId); // Set the new user as the current user
-      setShowModal(false);
-      setNewUserData({ name: "", email: "", image: null });
+  // Handle storing board if the seed matches
+  const handleStoreBoard = async () => {
+    if (boardSeed) {
+      try {
+        // Save the board to the cache using a single function
+        await updateBoardBySeed(firebaseUrl,boardSeed); // Call the service function
+        console.log("Board stored successfully.");
+        setShowShareModal(false); // Close the modal after storing
+        
+      } catch (error) {
+        console.error("Error storing board:", error);
+      }
     } else {
-      alert("Please fill in the name and email");
+      console.error("Board seed does not match.");
     }
-  };
 
-  // Handle selecting an existing user
-  const handleUserPick = (userId) => {
-    setCurrentUserId(userId);
-    setShowModal(false);
   };
-
-  // Toggle notifications visibility
-  const toggleNotifications = () => {
-    setShowNotifications((prev) => !prev);
-  };
-
   // Update new user data with selected profile picture
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -109,9 +91,51 @@ function Header() {
     }
   };
 
+  // Handle creating a new user
+  const handleCreateUser = async () => {
+    if (newUserData.name && newUserData.email) {
+      const userId = `user-${Date.now()}`;
+      const userData = { ...newUserData, id: userId }; // Ensure ID is generated
+
+      try {
+        // Store user with seed
+        await storeUserData(seed, userData, newUserData.image);
+
+        // Now fetch all users from the cache again after saving the new user
+        const updatedUsers = await getAllUsers(seed);
+
+        // Ensure the users state is updated with the latest user list
+        setUsers(updatedUsers);
+
+        // Set the newly created user as the current user
+        setCurrentUserId(userId);
+
+        // Close the modal and reset new user data
+        setShowUserModal(false);
+        setNewUserData({ name: "", email: "", image: null });
+      } catch (error) {
+        console.error("Error creating user: ", error);
+      }
+    } else {
+      alert("Please fill in the name and email");
+    }
+  };
+
+  // Handle selecting an existing user
+  const handleUserPick = (userId) => {
+    setCurrentUserId(userId);
+    setShowUserModal(false); // Close the modal after user selection
+  };
+
   return (
-    <header className="flex items-center justify-between p-4 bg-white rounded-lg shadow-md relative z-20 pl-64
+    <header className="flex items-center justify-between p-4 bg-white rounded-lg shadow-md top-0 sticky z-20 pl-64 
     dark:bg-gray-800 text-black dark:text-white dark:shadow-white">
+      <div className="flex items-center mb-4 -ml-60 ">
+        <div className="bg-yellow-main text-white p-4 rounded-full mr-3">
+          📂
+        </div>
+        <span className="font-semibold text-xl/relaxed">Task-Magnament</span>
+      </div>
       <div className="flex items-center space-x-2 w-1/3">
         <InputText
           className="p-2 w-full border border-gray-300 rounded-lg dark:text-black"
@@ -121,14 +145,17 @@ function Header() {
       </div>
 
       <div className="flex items-center space-x-4">
-        <button className="p-2 bg-yellow-500 text-black rounded-lg shadow-md border border-black">
-          <i className="pi pi-plus mr-2 text-black"></i> Pending Functionality
-          here Sercho ng
+        {/* Updated button for "Sharing" */}
+        <button
+          className="p-2 bg-yellow-500 text-black rounded-lg shadow-md border border-black"
+          onClick={handleSharingClick} // Added handler for showing modal
+        >
+          <i className="pi pi-share-alt mr-2 text-black"></i> Sharing
         </button>
 
         <button
           className="p-2 bg-yellow-500 text-black rounded-lg shadow-md border border-black relative"
-          onClick={toggleNotifications}
+          onClick={() => setShowNotificationsModal((prev) => !prev)} // Toggle notifications modal
         >
           <i className="pi pi-bell"></i>
           {notifications.length > 0 && (
@@ -138,20 +165,16 @@ function Header() {
           )}
         </button>
 
-        {showNotifications && (
+        {showNotificationsModal && (
           <div
             ref={notificationsRef}
-            className="absolute right-0 top-7 mt-10 bg-white border shadow-lg rounded-lg w-64 p-4
-            dark:bg-gray-900 text-black dark:text-white"
+            className="absolute right-0 top-7 mt-10 bg-white border shadow-lg rounded-lg w-64 dark:bg-gray-800 text-black dark:text-white"
           >
-            <h4 className="font-semibold text-lg mb-2">Task Notifications</h4>
-            {notifications.length > 0 ? (
-              <ul className="space-y-2">
-                {notifications.map((task, index) => {
-                  // Make sure the 'date' exists and is valid
-                  const dueDate = new Date(task.date); // Changed 'dueDate' to 'date'
-                  const isValidDate = !isNaN(dueDate.getTime()); // Check if it's a valid date
-
+            <ul>
+              {notifications.length > 0 ? (
+                notifications.map((task, index) => {
+                  const dueDate = new Date(task.date);
+                  const isValidDate = !isNaN(dueDate);
                   return (
                     <li
                       key={index}
@@ -161,28 +184,30 @@ function Header() {
                       <p className="text-sm text-gray-600">
                         Due on:{" "}
                         {isValidDate
-                          ? dueDate.toLocaleDateString("en-US", {
-                              weekday: "long", // Example: "Monday"
-                              year: "numeric", // Example: "2024"
-                              month: "long", // Example: "November"
-                              day: "numeric", // Example: "11"
+                          ? new Date(dueDate).toLocaleDateString("en-US", {
+                              weekday: "long",
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
                             })
                           : "Invalid Date"}
                       </p>
                     </li>
                   );
-                })}
-              </ul>
-            ) : (
-              <p className="text-sm text-gray-600 dark:bg-gray-900 dark:text-white">No tasks due soon.</p>
-            )}
+                })
+              ) : (
+                <p className="text-sm text-gray-600 dark:bg-gray-900 dark:text-white">
+                  No tasks due soon.
+                </p>
+              )}
+            </ul>
           </div>
         )}
 
         <div className="relative">
           <button
             className="p-2 bg-blue-500 text-white rounded-lg"
-            onClick={handleUserSelect}
+            onClick={() => setShowUserModal(true)} // Set showShareModal to true for user modal
           >
             {currentUserId ? (
               <>
@@ -197,7 +222,43 @@ function Header() {
         </div>
       </div>
 
-      {showModal && (
+      {/* Modal for board sharing */}
+      {showShareModal && (
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-lg w-96 dark:bg-gray-900 text-black dark:text-white">
+            <h3 className="text-xl font-semibold mb-4">Share Board: {seed}</h3>
+            <p className="mb-4">Enter the seed to share this board:</p>
+            <input
+              type="text"
+              value={seed}
+              readOnly
+              className="p-2 border border-gray-300 rounded-lg w-full mb-4 dark:text-black"
+            />
+            <input
+              type="text"
+              onChange={(e) => setBoardSeed(e.target.value)}
+              placeholder="Place an external seed here."
+              className="p-2 border border-gray-300 rounded-lg w-full mb-4 dark:text-black"
+            />
+            <div className="flex justify-between space-x-4">
+              <button
+                onClick={handleStoreBoard}
+                className="p-2 bg-blue-500 text-white rounded-lg w-1/2"
+              >
+                Share
+              </button>
+              <button
+                onClick={() => setShowShareModal(false)} // Close share modal
+                className="p-2 bg-gray-500 text-white rounded-lg w-1/2 dark:text-black"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Modal for user creation or selection */}
+      {showUserModal && (
         <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white p-6 rounded-lg w-96 dark:bg-gray-900 text-black dark:text-white">
             <h3 className="text-xl font-semibold mb-4">
@@ -263,7 +324,7 @@ function Header() {
                 Create User
               </button>
               <button
-                onClick={() => setShowModal(false)}
+                onClick={() => setShowUserModal(false)}
                 className="p-2 bg-gray-500 text-white rounded-lg w-1/2 dark:text-black"
               >
                 Cancel

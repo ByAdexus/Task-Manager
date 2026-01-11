@@ -1,104 +1,215 @@
-import React, { useState, useEffect } from 'react';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
-import TaskCard from '../TaskCard/TaskCard';
-import { storeProject, getAllProjects, storeTask, storeAllProjects, getTask } from '../../services/storageService';
-
-/*
-const clearCache = () => {
-  if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-    navigator.serviceWorker.controller.postMessage('clearCache');
-  }
-};
-
-// Call this function when you want to reset the cache (for example, when the page loads or through a button)
-clearCache();
-*/
+import React, { useState, useEffect } from "react";
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import TaskCard from "../TaskCard/TaskCard";
+import {
+  storeProject,
+  getAllProjects,
+  storeTask,
+  storeAllProjects,
+  downloadBoardCacheFromFirebase,
+  uploadBoardCacheToFirebase,
+  syncCacheWithFirebase,
+} from "../../services/storageService";
+import { useFirebaseContext } from "../../services/FirebaseContext";
+import { getDeviceKey } from "../../services/firebaseSyncsS";
 
 const KanbanBoard = () => {
-  const [data, setData] = useState({ projects: {}, projectOrder: [], tasks: {} });
-  const [newProjectTitle, setNewProjectTitle] = useState('');
+  const { seed, firebaseUrl } = useFirebaseContext();
+
+  const boardUrl = `${firebaseUrl}/boards/${seed}`;
+
+  const [data, setData] = useState({
+    name: "",
+    deviceKey:"",
+    seed:"",
+    projects: {},
+    projectOrder: [],
+    tasks: {},
+  });
+
+  const [newProjectTitle, setNewProjectTitle] = useState("");
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [currentProjectId, setCurrentProjectId] = useState(null);
   const [taskForm, setTaskForm] = useState({
-    title: '',
-    description: '',
-    date: '',
-    priority: 'medium',
-    color: '#000000',
+    title: "",
+    description: "",
+    date: "",
+    priority: "medium",
+    color: "#000000",
   });
 
-  // Load all projects and tasks from cache on component mount
-  const loadProjects = async () => {
-    const cachedProjects = await getAllProjects();
-    if (cachedProjects) {
-      setData({
-        projects: cachedProjects.projects,
-        projectOrder: cachedProjects.projectOrder,
-        tasks: cachedProjects.tasks || {}, // Ensure tasks are loaded from cache
-      });
-    }
-  };
-
   useEffect(() => {
-    loadProjects(); // Load projects when the component mounts
-  }, []);
+    const loadProjects = async () => {
+      const localCache = await getAllProjects(seed); // Get cached data
+   
+    
+      if (!localCache || !localCache.projects) {
+        console.log("Local cache is empty. Fetching from Firebase...");
+        const remoteCache = await downloadBoardCacheFromFirebase(firebaseUrl, seed);
+        if (remoteCache) {
 
-  // Fetch task by ID, fallback to cache if not available in state
-  const getTaskFromStateOrCache = async (taskId) => {
-    if (data.tasks[taskId]) {
-      return data.tasks[taskId]; // Return from state if available
-    }
-    // If not in state, try to get it from cache
-    const task = await getTask(taskId);
-    if (task) {
-      setData((prevData) => ({
-        ...prevData,
-        tasks: { ...prevData.tasks, [taskId]: task }, // Store the task in state
-      }));
-    }
-    return task;
-  };
+
+          setData({
+            name:remoteCache.name || "Default Board Name",
+            deviceKey: remoteCache.deviceKey || getDeviceKey(),
+            seed: remoteCache.seed || seed,
+            projects: remoteCache.projects || {},
+            projectOrder: remoteCache.projectOrder || [],
+            tasks: remoteCache.tasks || {},
+          });
+    
+          // Save the fetched data to cache for next use
+          storeAllProjects(seed, remoteCache);
+        }
+      } else {
+      
+        setData({
+          name: localCache.name || "Default Board Name",
+          deviceKey: localCache.deviceKey || getDeviceKey(),
+          seed: localCache.seed || seed,
+          projects: localCache.projects || {},
+          projectOrder: localCache.projectOrder || [],
+          tasks: localCache.tasks || {},
+        });
+      }
+    };
+    
+  
+    loadProjects();
+  
+    // Define the sync function to be added as event listener
+    const syncCache = () => syncCacheWithFirebase(data, firebaseUrl, seed);
+  
+    // Add online event listener for sync
+    window.addEventListener("online", syncCache);
+  
+    // Clean up event listener on component unmount
+    return () => {
+      window.removeEventListener("online", syncCache);
+    };
+  }, [seed, firebaseUrl]); // Dependencies to watch
+  
+
   const handleCreateProject = async () => {
+    if (!newProjectTitle.trim()) {
+      alert("Project title is required.");
+      return;
+    }
+
     const newProject = {
-      id: `project-${Date.now()}`, // Simple unique ID based on timestamp
+      id: `project-${seed}-${Date.now()}`,
       title: newProjectTitle,
       taskIds: [],
     };
-  
-    // Update the state with the new project
+
     const updatedProjects = {
       ...data.projects,
       [newProject.id]: newProject,
     };
+
     const updatedProjectOrder = [...data.projectOrder, newProject.id];
-  
+
     setData({
+      ...data,
       projects: updatedProjects,
       projectOrder: updatedProjectOrder,
-      tasks: data.tasks, // Ensure tasks are not lost
+      tasks: data.tasks,
     });
-  
-    // Save the new project to the cache
-    await storeProject(newProject);
-  
-    // Store all projects (with new one added)
-    await storeAllProjects({
+
+    await storeProject(seed, newProject);
+    await storeAllProjects(seed, {
+      ...data,
       projects: updatedProjects,
       projectOrder: updatedProjectOrder,
-      tasks: data.tasks, // Ensure tasks are also stored
+      tasks: data.tasks,
     });
-  
-    // Clear the modal input
-    setNewProjectTitle('');
+    await syncCacheWithFirebase(data, firebaseUrl, seed);
+    await uploadBoardCacheToFirebase(seed, data , firebaseUrl);
+
+    setNewProjectTitle("");
     setShowProjectModal(false);
   };
 
+
+
+
+  const handleCreateTask = async () => {
+    const { title, description, date, priority, color } = taskForm;
+  
+    if (!title || !description || !date || !priority || !color) {
+      alert("Please fill out all fields.");
+      return;
+    }
+  
+    const task = {
+      id: `task-${seed}-${Date.now()}`,
+      title,
+      description,
+      date,
+      priority,
+      color,
+    };
+  
+    const updatedProjects = { ...data.projects };
+    const project = updatedProjects[currentProjectId];
+  
+    if (!project) {
+      alert("Project not found!");
+      return;
+    }
+  
+    project.taskIds = [...project.taskIds, task.id];
+  
+    const updatedTasks = { ...data.tasks, [task.id]: task };
+  
+    setData({
+      ...data,
+      projects: updatedProjects,
+      tasks: updatedTasks,
+    });
+  
+    // Save data
+    await storeTask(seed, task);
+    await storeProject(seed, project);
+    await storeAllProjects(seed, {
+      ...data,
+      projects: updatedProjects,
+      projectOrder: data.projectOrder,
+      tasks: updatedTasks,
+
+    });
+  
+    await uploadBoardCacheToFirebase(seed, {
+      ...data,
+      projects: updatedProjects,
+      tasks: updatedTasks,
+    }, firebaseUrl);
+  
+    setShowTaskModal(false);
+    setTaskForm({
+      title: "",
+      description: "",
+      date: "",
+      priority: "medium",
+      color: "#000000",
+    });
+  };
+  
+
+
+
+
+
+  // Drag-and-Drop Handling
   const onDragEnd = (result) => {
     const { destination, source } = result;
 
     if (!destination) return;
-    if (source.droppableId === destination.droppableId && source.index === destination.index) {
+    if (
+      source.droppableId === destination.droppableId &&
+      source.index === destination.index
+    ) {
       return;
     }
 
@@ -106,7 +217,6 @@ const KanbanBoard = () => {
     const sourceProject = updatedProjects[source.droppableId];
     const destinationProject = updatedProjects[destination.droppableId];
 
-    // Move the task between columns
     const [removed] = sourceProject.taskIds.splice(source.index, 1);
     destinationProject.taskIds.splice(destination.index, 0, removed);
 
@@ -115,113 +225,45 @@ const KanbanBoard = () => {
       projects: updatedProjects,
     });
 
-    storeAllProjects({
-      projects: updatedProjects,
-      projectOrder: data.projectOrder,
-      tasks: data.tasks, // Store tasks as well
-    });
-  };
-
-  const handleCreateTask = async () => {
-    const { title, description, date, priority, color } = taskForm;
-
-    if (!title || !description || !date || !priority || !color) {
-      alert('Please fill out all fields.');
-      return;
-    }
-
-    const task = {
-      id: `task-${Date.now()}`, // Unique ID for the task
-      title,
-      description,
-      date,
-      priority,
-      color,
-    };
-
-    const updatedProjects = { ...data.projects };
-    const project = updatedProjects[currentProjectId];
-    project.taskIds.push(task.id);
-
-    setData({
+    storeAllProjects(seed, {
       ...data,
       projects: updatedProjects,
-      tasks: { ...data.tasks, [task.id]: task }, // Store task in state immediately
-    });
-
-    await storeTask(task); // Store in cache
-    await storeProject(project); // Store project with updated task list
-    await storeAllProjects({
-      projects: updatedProjects,
       projectOrder: data.projectOrder,
-      tasks: { ...data.tasks, [task.id]: task }, // Store tasks as well
+      tasks: data.tasks,
     });
-
-    setShowTaskModal(false);
-    setTaskForm({
-      title: '',
-      description: '',
-      date: '',
-      priority: 'medium',
-      color: '#000000',
+    syncCacheWithFirebase(data, firebaseUrl, seed);
+    uploadBoardCacheToFirebase(seed, data , firebaseUrl);
+  };
+  const updateTaskInState = (taskId, updatedTask) => {
+    setData((prevData) => {
+      const updatedTasks = { ...prevData.tasks, [taskId]: updatedTask };
+      return { ...prevData, tasks: updatedTasks };
     });
   };
 
-
-
-const updateTaskInState = (taskId, updatedTask) => {
-  setData((prevData) => ({
-    ...prevData,
-    tasks: {
-      ...prevData.tasks,
-      [taskId]: updatedTask
-    }
-  }));
-  storeAllProjects({
-    ...data,
-    tasks: {
-      ...data.tasks,
-      [taskId]: updatedTask
-    }
-  });
-};
-
-const deleteTaskInState = (taskId) => {
-  setData((prevData) => {
-    const updatedTasks = { ...prevData.tasks };
-    delete updatedTasks[taskId];
-
-    const updatedProjects = { ...prevData.projects };
-    Object.values(updatedProjects).forEach((project) => {
-      project.taskIds = project.taskIds.filter((id) => id !== taskId);
+  const deleteTaskInState = (taskId) => {
+    setData((prevData) => {
+      const updatedTasks = { ...prevData.tasks };
+      delete updatedTasks[taskId];
+      return { ...prevData, tasks: updatedTasks };
     });
-
-    return {
-      ...prevData,
-      projects: updatedProjects,
-      tasks: updatedTasks
-    };
-  });
-
-  storeAllProjects({
-    ...data,
-    tasks: data.tasks,
-    projects: data.projects
-  });
-};
-
+  };
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>
-      <div className="flex p-6 space-x-4 ml-64">
-        {data.projectOrder.map((projectId) => {
+    <div className="flex p-6 space-x-4">
+      {data.projectOrder.length > 0 ? (
+        data.projectOrder.map((projectId) => {
           const project = data.projects[projectId];
-          // Validar si el proyecto y sus tareas existen
-  if (!project || !project.taskIds) return null;
+          if (!project || !project.taskIds) {
+
+            return null;
+          }
 
           const tasks = project.taskIds
-    .map((taskId) => data.tasks[taskId])
-    .filter((task) => task); // Filtra tareas nulas
+            .map((taskId) => data.tasks[taskId])
+            .filter((task) => task); // Filter out null tasks
+
 
           return (
             <Droppable droppableId={project.id} key={project.id}>
@@ -229,11 +271,13 @@ const deleteTaskInState = (taskId) => {
                 <div
                   ref={provided.innerRef}
                   {...provided.droppableProps}
-                  className="bg-gray-100 p-4 rounded-lg w-80 dark:bg-gray-900 text-black "
-                  style={{ minHeight: '300px' }}
+                  className="bg-gray-100 p-4 rounded-lg w-80 dark:bg-gray-900 text-black"
+                  style={{ minHeight: "300px" }}
                 >
-                  <div className="flex justify-between items-center mb-2 ">
-                    <h2 className="font-semibold text-lg text-gray-700 dark:text-white">{project.title}</h2>
+                  <div className="flex justify-between items-center mb-2">
+                    <h2 className="font-semibold text-lg text-gray-700 dark:text-white">
+                      {project.title}
+                    </h2>
                     <button
                       onClick={() => {
                         setCurrentProjectId(project.id);
@@ -247,46 +291,59 @@ const deleteTaskInState = (taskId) => {
 
                   <hr className="border-t-2 border-gray-300 mb-4" />
 
-                  {tasks.map((task, index) => (
-                    <Draggable key={task.id} draggableId={task.id} index={index}>
-                      {(provided) => (
-                        <div
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          className="bg-white p-4 rounded-lg shadow-md mb-4 dark:bg-indigo-900"
-                        >
-                          <TaskCard 
-  task={task} 
-  updateTaskInState={updateTaskInState} 
-  deleteTaskInState={deleteTaskInState} 
-/>
-                        </div>
-                      )}
-                    </Draggable>
-                  ))}
+                  {tasks.length > 0 ? (
+                    tasks.map((task, index) => (
+                      <Draggable key={task.id} draggableId={task.id} index={index}>
+                        {(provided) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                            className="bg-white p-4 rounded-lg shadow-md mb-4 dark:bg-indigo-900"
+                          >
+                            <TaskCard
+                              task={task}
+                              updateTaskInState={updateTaskInState}
+                              deleteTaskInState={deleteTaskInState}
+                            />
+                          </div>
+                        )}
+                      </Draggable>
+                    ))
+                  ) : (
+                    <div>No tasks in this project</div>
+                  )}
+
                   {provided.placeholder}
                 </div>
               )}
             </Droppable>
           );
-        })}
+        })
+      ) : (
+        <div className="text-center w-full">
+          <p className="text-gray-500 text-lg dark:text-gray-300">
+            No projects available. Click the + button to create a new project.
+          </p>
+        </div>
+      )}
+
 
         {/* Project Modal */}
         {showProjectModal && (
           <div
-          className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center z-50"
-          onClick={() => setShowProjectModal(false)} // Detecta clics en el fondo
-        >
-          <div
-            className="bg-white p-6 rounded-lg dark:bg-gray-900 text-black dark:text-white relative"
-            onClick={(e) => e.stopPropagation()} // Evita cerrar el modal al hacer clic dentro de él
+            className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center z-50"
+            onClick={() => setShowProjectModal(false)}
           >
+            <div
+              className="bg-white p-6 rounded-lg dark:bg-gray-900 text-black dark:text-white relative"
+              onClick={(e) => e.stopPropagation()}
+            >
               <input
                 type="text"
                 value={newProjectTitle}
                 onChange={(e) => setNewProjectTitle(e.target.value)}
-                className="p-2 border-b border-gray-300 focus:outline-none"
+                className="p-2 border-b border-gray-300 focus:outline-none dark:text-black"
                 placeholder="Enter project title"
               />
               <button
@@ -302,42 +359,50 @@ const deleteTaskInState = (taskId) => {
         {/* Task Modal */}
         {showTaskModal && (
           <div
-          className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center z-50"
-          onClick={() => setShowTaskModal(false)} // Detecta clics en el fondo
-        >
-          <div
-            className="bg-white p-6 rounded-lg dark:bg-gray-900 text-black dark:text-white relative"
-            onClick={(e) => e.stopPropagation()} // Evita cerrar el modal al hacer clic dentro de él
+            className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center z-50"
+            onClick={() => setShowTaskModal(false)}
           >
-            <button
-        onClick={() => setShowTaskModal(false)}
-        className="absolute top-2 right-2 text-gray-700 dark:text-white"
-      >
-        X
-      </button>
+            <div
+              className="bg-white p-6 rounded-lg dark:bg-gray-900 text-black dark:text-white relative"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setShowTaskModal(false)}
+                className="absolute top-2 right-2 text-gray-700 dark:text-white"
+              >
+                X
+              </button>
               <h3 className="text-lg font-semibold mb-4">Add New Task</h3>
               <input
                 type="text"
                 value={taskForm.title}
-                onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })}
+                onChange={(e) =>
+                  setTaskForm({ ...taskForm, title: e.target.value })
+                }
                 className="w-full p-2 mb-4 border border-gray-300 rounded-md dark:text-black"
                 placeholder="Task Title"
               />
               <textarea
                 value={taskForm.description}
-                onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })}
+                onChange={(e) =>
+                  setTaskForm({ ...taskForm, description: e.target.value })
+                }
                 className="w-full p-2 mb-4 border border-gray-300 rounded-md dark:text-black"
                 placeholder="Task Description"
               />
               <input
                 type="date"
                 value={taskForm.date}
-                onChange={(e) => setTaskForm({ ...taskForm, date: e.target.value })}
+                onChange={(e) =>
+                  setTaskForm({ ...taskForm, date: e.target.value })
+                }
                 className="w-full p-2 mb-4 border border-gray-300 rounded-md dark:text-black"
               />
               <select
                 value={taskForm.priority}
-                onChange={(e) => setTaskForm({ ...taskForm, priority: e.target.value })}
+                onChange={(e) =>
+                  setTaskForm({ ...taskForm, priority: e.target.value })
+                }
                 className="w-full p-2 mb-4 border border-gray-300 rounded-md dark:text-black"
               >
                 <option value="high">High</option>
@@ -347,7 +412,9 @@ const deleteTaskInState = (taskId) => {
               <input
                 type="color"
                 value={taskForm.color}
-                onChange={(e) => setTaskForm({ ...taskForm, color: e.target.value })}
+                onChange={(e) =>
+                  setTaskForm({ ...taskForm, color: e.target.value })
+                }
                 className="w-full p-2 mb-4 border border-gray-300 rounded-md dark:text-black"
               />
               <button
@@ -364,12 +431,12 @@ const deleteTaskInState = (taskId) => {
       {/* Floating Button for Adding Projects */}
       <button
         onClick={() => setShowProjectModal(true)}
-        className="fixed bottom-4 right-4 bg-green-500 text-white p-4 rounded-full shadow-lg z-50"
+        className="fixed bottom-4 right-4 bg-green-500 text-white p-4 rounded-full shadow-lg z-60"
       >
         +
       </button>
     </DragDropContext>
   );
-}
+};
 
 export default KanbanBoard;

@@ -1,20 +1,30 @@
-// src/contexts/DarkModeContext.js
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext } from 'react';
+import { storeInCache, getFromCache } from './cacheUtils'; // Adjust path if necessary
 
 const DarkModeContext = createContext();
 
 export const useDarkMode = () => useContext(DarkModeContext);
 
 export const DarkMode = ({ children }) => {
-  const [isDarkMode, setIsDarkMode] = useState(
-    localStorage.getItem('dark-mode') === 'true'
-  );
+  const [isDarkMode, setIsDarkMode] = useState(false); // Default mode
 
-  const toggleDarkMode = () => {
+  useEffect(() => {
+    // Load dark mode preference from cache on mount
+    const loadDarkMode = async () => {
+      const cachedMode = await getFromCache('dark-mode');
+      if (cachedMode !== null) {
+        setIsDarkMode(cachedMode);
+        document.documentElement.classList.toggle('dark', cachedMode);
+      }
+    };
+    loadDarkMode();
+  }, []);
+
+  const toggleDarkMode = async () => {
     const newMode = !isDarkMode;
     setIsDarkMode(newMode);
-    localStorage.setItem('dark-mode', newMode);
     document.documentElement.classList.toggle('dark', newMode);
+    await storeInCache('dark-mode', newMode);
   };
 
   return (
